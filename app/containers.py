@@ -15,13 +15,11 @@ class Container(containers.DeclarativeContainer):
     )
 
     # 의존성 정의
-    db = providers.Factory(SessionLocal)
+    db = providers.Resource(get_db)
     user_repo = providers.Factory(UserRepository, db=db)
-    # ulid = providers.Factory(ulid.ULID)  # ULID 인스턴스 생성
     crypto = providers.Factory(Crypto)
     user_service = providers.Factory(
         UserService,
         user_repo=user_repo,
         crypto=crypto
-        # ulid=ulid,  # ulid 주입
     )

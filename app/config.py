@@ -18,7 +18,7 @@ class Settings(BaseSettings):
     POSTGRES_USER: str
     POSTGRES_PASSWORD: str
     POSTGRES_DB: str
-    SECRET_KEY: str
+    JWT_SECRET_KEY: str
     SQLALCHEMY_DATABASE_URL: str
     ACCESS_TOKEN_EXPIRE_MINUTES: int
     KAKAO_CLIENT_ID: str

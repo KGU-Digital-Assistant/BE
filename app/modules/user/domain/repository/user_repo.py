@@ -7,7 +7,7 @@ from modules.user.domain.user import User as User
 
 class IUserRepository(metaclass=ABCMeta):
     @abstractmethod
-    def save(self, user: User, db: Session):
+    def save(self, user: User):
         raise NotImplementedError
 
     @abstractmethod
@@ -24,4 +24,16 @@ class IUserRepository(metaclass=ABCMeta):
 
     @abstractmethod
     def delete(self, user_id):
+        raise NotImplementedError
+
+    @abstractmethod
+    def find_by_nickname(self, nickname: str):
+        raise NotImplementedError
+
+    @abstractmethod
+    def find_by_cellphone(self, cellphone: str):
+        raise NotImplementedError
+
+    @abstractmethod
+    def find_by_username(self, username: str):
         raise NotImplementedError

@@ -8,10 +8,12 @@ from fastapi.security import OAuth2PasswordBearer
 from jose import jwt, JWTError
 
 from config import Settings
+from utils.exceptions.error_code import ErrorCode
+from utils.exceptions.handlers import CustomException
 
 settings = Settings()
 
-SECRET_KEY = settings.SECRET_KEY
+SECRET_KEY = settings.JWT_SECRET_KEY
 ALGORITHM = "HS256"
 
 
@@ -29,7 +31,7 @@ def create_access_token(
     expire = datetime.utcnow() + expires_delta
     payload.update(
         {
-            "role": role,
+            "role": role.value,
             "exp": expire,
         }
     )
@@ -62,8 +64,8 @@ def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]):
 
     user_id = payload.get("user_id")
     role = payload.get("role")
-    if not user_id or not role or role != Role.USER:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN)
+    if not user_id or not role or role != Role.USER.value:
+        raise CustomException(ErrorCode.USER_NOT_AUTHENTICATED)
 
     return CurrentUser(user_id, Role(role))
 

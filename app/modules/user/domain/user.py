@@ -18,11 +18,11 @@ class User:
     email: EmailStr
     password: str
     gender: Gender
-    birthday: datetime.date
+    birth: datetime.date
     rank: Rank
     role: Role
     profile_picture: str | None
     fcm_token: str | None
     # mentor_id: str | None
-    created_date: datetime
-    updated_date: datetime
+    create_date: datetime
+    update_date: datetime
