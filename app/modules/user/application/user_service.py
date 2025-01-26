@@ -17,6 +17,7 @@ from utils.crypto import Crypto
 from utils.db_utils import is_similar
 from utils.exceptions.error_code import ErrorCode
 from utils.exceptions.handlers import CustomException
+from utils.phone_verify import send_verification_code, check_verification_code
 
 
 class UserService:

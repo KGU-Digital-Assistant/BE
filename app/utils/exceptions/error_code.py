@@ -4,6 +4,8 @@ from fastapi import HTTPException, status
 
 class ErrorCode(Enum):
 
+    CODE_VERIFY_FAIL = (status.HTTP_400_BAD_REQUEST, "인증 코드가 올바르지 않습니다.")
+    CODE_SEND_FAIL = (status.HTTP_502_BAD_GATEWAY, "휴대폰 인증 코드 발송에 실패했습니다.")
     UNPROCESSABLE_ENTITY = (status.HTTP_422_UNPROCESSABLE_ENTITY, "올바른 요청이지만 요청된 지시에 따를 수 없습니다.")
 
     # User 관련 에러 코드

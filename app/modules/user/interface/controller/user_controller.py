@@ -18,6 +18,7 @@ from modules.user.interface.schema.user_schema import CreateUserBody, UserRespon
 from utils.db_utils import row_to_dict
 from utils.exceptions.error_code import ErrorCode
 from utils.exceptions.handlers import CustomException
+from utils.phone_verify import PhoneNumberRequest, VerificationRequest, send_code, verify_code
 from utils.responses.response import create_response
 from utils.responses.response_schema import APIResponse
 
@@ -115,3 +116,18 @@ def get_users_by_username(
 
 # @router.post("/upload_profile_picture") -> update로 가능
 
+
+@router.post("/send-code/", response_model=APIResponse)
+def phone_send_code(
+        request: PhoneNumberRequest,
+):
+    send_code(request.phone_number)
+    return create_response()
+
+
+@router.post("/verify-code/")
+def phone_verify_code(
+        request: VerificationRequest,
+):
+    message = verify_code(request.phone_number, request.code)
+    return create_response(message)
