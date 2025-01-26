@@ -13,6 +13,7 @@ from modules.user.domain.repository.user_repo import IUserRepository
 from modules.user.domain.user import User
 from modules.user.interface.schema.user_schema import CreateUserBody, Rank, UpdateUserBody
 from utils.crypto import Crypto
+from utils.db_utils import is_similar
 from utils.exceptions.error_code import ErrorCode
 from utils.exceptions.handlers import CustomException
 
@@ -132,3 +133,27 @@ class UserService:
 
         return self.user_repo.update(user)
 
+    def get_user_info(self, id: str):
+        return self.user_repo.find_by_id(id)
+
+    def save_fcm_token(self, id: str, token: str):
+        user = self.user_repo.find_by_id(id)
+        user.fcm_token = token
+
+        try:
+            userVO = self.user_repo.save_fcm_token(user)
+            return userVO
+        except HTTPException as e:
+            raise HTTPException(status_code=e.status_code, detail=e.detail)
+
+    def get_users_by_username(self, username: str, id: str):
+        user = self.user_repo.find_by_id(id)
+        if user is None:
+            raise CustomException(ErrorCode.USER_NOT_FOUND)
+
+        user_list = self.user_repo.find_by_username_all(username)
+        res = []
+        for user in user_list:
+            if is_similar(user.username, username):
+                res.append(user)
+        return res

@@ -1,3 +1,5 @@
+from difflib import SequenceMatcher
+
 from sqlalchemy import inspect
 from typing import Type, TypeVar
 from dataclasses import dataclass, asdict, fields, is_dataclass
@@ -24,6 +26,13 @@ def pydantic_to_dataclass(pydantic_instance: BaseModel, dataclass_model: Type[D]
     dataclass_fields = {field.name for field in fields(dataclass_model)}
     filtered_data = {key: value for key, value in data.items() if key in dataclass_fields}
     return dataclass_model(**filtered_data)
+
+
+def is_similar(str1: str, str2: str, threshold: float = 0.8) -> bool:
+    """
+    str1 과 str2 비교해서 threshold 이상 유사하면 가져옴
+    """
+    return SequenceMatcher(None, str1, str2).ratio() >= threshold
 
 
 def row_to_dict(row) -> dict:
