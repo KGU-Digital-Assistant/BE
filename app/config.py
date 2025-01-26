@@ -33,7 +33,7 @@ class Settings(BaseSettings):
     SMS_KEY: str
     SMS_SECRET_KEY: str
     MY_PHONE_NUMBER: str
-
+    FERNET_KEY: str
 
 @lru_cache
 def get_settings():

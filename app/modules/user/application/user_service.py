@@ -7,6 +7,7 @@ from ulid import ULID
 from dependency_injector.wiring import inject, Container, Provide
 
 from core.auth import create_access_token, Role
+from core.fcm import encrypt_token
 from database import get_db
 from modules.user.domain.repository import user_repo
 from modules.user.domain.repository.user_repo import IUserRepository
@@ -74,7 +75,7 @@ class UserService:
             password=self.crypto.encrypt(user.password1),
             create_date=now,
             update_date=now,
-            fcm_token="default",
+            fcm_token=None,
             profile_picture=user.profile_picture,
             role=Role.USER
         )
@@ -138,7 +139,7 @@ class UserService:
 
     def save_fcm_token(self, id: str, token: str):
         user = self.user_repo.find_by_id(id)
-        user.fcm_token = token
+        user.fcm_token = encrypt_token(token)
 
         try:
             userVO = self.user_repo.save_fcm_token(user)
