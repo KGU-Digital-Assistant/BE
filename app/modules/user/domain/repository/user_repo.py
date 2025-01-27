@@ -11,11 +11,11 @@ class IUserRepository(metaclass=ABCMeta):
         raise NotImplementedError
 
     @abstractmethod
-    def find_by_id(self, user_id: str) -> User:
+    def find_by_email(self, email):
         raise NotImplementedError
 
     @abstractmethod
-    def find_by_email(self, email):
+    def find_by_id(self, user_id: str) -> User:
         raise NotImplementedError
 
     @abstractmethod
@@ -36,4 +36,12 @@ class IUserRepository(metaclass=ABCMeta):
 
     @abstractmethod
     def find_by_username(self, username: str):
+        raise NotImplementedError
+
+    @abstractmethod
+    def save_fcm_token(self, user: User):
+        raise NotImplementedError
+
+    @abstractmethod
+    def find_by_username_all(self, username: str):
         raise NotImplementedError

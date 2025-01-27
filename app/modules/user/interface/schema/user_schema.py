@@ -44,8 +44,28 @@ class UserResponse(BaseModel):
     email: str
 
 
+class UserInfoResponse(UserResponse):
+    id: str
+    nickname: str
+    cellphone: str
+    gender: Gender
+    birth: date
+    rank: Rank
+    role: Role
+    profile_picture: str
+    create_date: datetime
+    update_date: datetime
+
+
 class UpdateUserBody(BaseModel):
     nickname: Optional[str] = Field(default=None, min_length=2, max_length=32)
     password: Optional[str] = Field(default=None, min_length=8, max_length=32)
+    password2: Optional[str] = Field(default=None, min_length=8, max_length=32)
     profile_picture: Optional[str] = Field(default=None, max_length=128)
     email: Optional[EmailStr] = Field(default=None, max_length=64)
+
+    @field_validator('password2')
+    def passwords_match(cls, v, info: FieldValidationInfo):
+        if 'password' in info.data and v != info.data['password']:
+            raise ValueError('Passwords do not match')
+        return v

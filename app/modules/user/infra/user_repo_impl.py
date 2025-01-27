@@ -90,20 +90,6 @@ class UserRepository(IUserRepository, ABC):
         self.db.commit()
         return UserVO(**row_to_dict(user))
 
-    # def get_users(
-    #         self,
-    #         page: int = 1,
-    #         items_per_page: int = 10,
-    # ) -> tuple[int, list[UserVO]]:
-    #     with SessionLocal() as db:
-    #         query = db.query(User)
-    #         total_count = query.count()
-    #
-    #         offset = (page - 1) * items_per_page
-    #         users = query.limit(items_per_page).offset(offset).all()
-
-        # return total_count, [UserVO(**row_to_dict(user)) for user in users]
-
     def delete(self, id: str):
         user = self.db.query(User).filter(User.id == id).first()
 
@@ -112,3 +98,17 @@ class UserRepository(IUserRepository, ABC):
 
         self.db.delete(user)
         self.db.commit()
+
+    def save_fcm_token(self, user_vo: UserVO):
+        user = self.db.query(User).filter(User.id == user_vo.id).first()
+        if not user:
+            raise CustomException(ErrorCode.USER_NOT_FOUND)
+
+        user.fcm_token = user_vo.fcm_token
+        self.db.commit()
+        return UserVO(**row_to_dict(user))
+
+    def find_by_username_all(self, username: str):
+        user_list = self.db.query(User).filter(User.username == username).all()
+        res = [UserVO(**row_to_dict(user)) for user in user_list]
+        return res
