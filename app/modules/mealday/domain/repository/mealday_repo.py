@@ -1,0 +1,15 @@
+from abc import ABCMeta, abstractmethod
+
+from datetime import date
+from modules.user.domain.user import User as User
+from modules.mealday.domain.mealday import MealDay as MealDay
+
+class IMealDayRepository(metaclass=ABCMeta):
+    @abstractmethod
+    def save(self, mealday: MealDay):
+        raise NotImplementedError
+
+    @abstractmethod
+    def find_by_date(self, user_id: str, record_date: date) -> MealDay:
+        raise NotImplementedError
+

@@ -4,13 +4,16 @@ import ulid
 from database import get_db, SessionLocal
 from modules.user.application.user_service import UserService
 from modules.user.infra.user_repo_impl import UserRepository
+from modules.mealday.infra.mealday_repo_impl import MealDayRepository
+from modules.mealday.application.mealday_service import MealDayService
 from utils.crypto import Crypto
 
 
 class Container(containers.DeclarativeContainer):
     wiring_config = containers.WiringConfiguration(
         packages=[
-            "modules.user"  # 의존성을 사용하는 모듈
+            "modules.user",  # 의존성을 사용하는 모듈
+            "modules.mealday"
         ]
     )
 
@@ -22,4 +25,11 @@ class Container(containers.DeclarativeContainer):
         UserService,
         user_repo=user_repo,
         crypto=crypto
+    )
+
+    mealday_repo = providers.Factory(MealDayRepository, db=db)
+    mealday_service = providers.Factory(
+        MealDayService,
+        mealday_repo = mealday_repo,
+        crypto = crypto
     )

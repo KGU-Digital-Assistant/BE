@@ -4,11 +4,13 @@ from starlette.middleware.cors import CORSMiddleware
 
 from containers import Container
 from modules.user.interface.controller import user_controller as user_router
+from modules.mealday.interface.controller import mealday_controller as mealday_router
 
 app = FastAPI()
 app.container = Container()
 
 app.include_router(user_router.router)
+app.include_router(mealday_router.router)
 
 origins = [
     "*",

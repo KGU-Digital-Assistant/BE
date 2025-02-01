@@ -15,6 +15,9 @@ class ErrorCode(Enum):
     USER_ALREADY_EXIST_EMAIL = (status.HTTP_409_CONFLICT, "중복된 이메일 입니다")
     USER_ALREADY_EXIST_NICKNAME = (status.HTTP_409_CONFLICT, " 중복된 닉네임 입니다.")
 
+    # MealDay 관련 에러 코드
+    MEALDAY_NOT_FOUND = (status.HTTP_404_NOT_FOUND, "식단(일일)가 존재하지 않습니다.")
+
     # db 관련 에러 코드
     DATABASE_SAVE_FAIL = (status.HTTP_500_INTERNAL_SERVER_ERROR, "데이터베이스 저장에 실패했습니다.")
 
