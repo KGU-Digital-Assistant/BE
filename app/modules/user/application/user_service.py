@@ -31,7 +31,6 @@ class UserService:
         if self.user_repo.find_by_nickname(user.nickname): raise raise_error(ErrorCode.USER_ALREADY_EXIST_NICKNAME)
         if self.user_repo.find_by_cellphone(user.cellphone): raise raise_error(ErrorCode.USER_ALREADY_EXIST_CELLPHONE)
         if self.user_repo.find_by_username(user.username): raise raise_error(ErrorCode.USER_ALREADY_EXIST_USERNAME)
-
         return dataclass_to_pydantic(self.user_repo.save(user), UserResponse)
 
     def login(self, username: str, password: str):
@@ -41,18 +40,18 @@ class UserService:
         if not (self.crypto.verify(password, user.password)):
             raise raise_error(ErrorCode.PASSWORD_INVALID)
 
-        access_token = create_access_token(
+        return create_access_token(
             payload={"user_id": user.id},
             role=Role.USER,
         )
-
-        return access_token
 
     def delete_user(self, id: str):
         self.user_repo.delete(id)
 
     def validate_user_update(self, body: UpdateUserBody, cur_user: User):
         """유효성 검사: 닉네임 & 이메일 중복 체크"""
+        if not cur_user:
+            raise raise_error(ErrorCode.USER_NOT_FOUND)
         nick_user = self.user_repo.find_by_nickname(body.nickname)
         email_user = self.user_repo.find_by_email(body.email)
         if body.nickname and nick_user is not None and nick_user.id != cur_user.id:
@@ -62,45 +61,36 @@ class UserService:
 
     def apply_updates(self, user, body: UpdateUserBody):
         """사용자 정보 업데이트 적용"""
-        if body.nickname:
-            user.nickname = body.nickname
-        if body.password:
-            user.password = self.crypto.encrypt(body.password)
-        if body.profile_picture:
-            user.profile_picture = body.profile_picture
-        if body.email:
-            user.email = body.email
+        if body.nickname: user.nickname = body.nickname
+        if body.password: user.password = self.crypto.encrypt(body.password)
+        if body.profile_picture: user.profile_picture = body.profile_picture
+        if body.email: user.email = body.email
 
         user.update_date = datetime.now()
 
     def update_user(self, id: str, body: UpdateUserBody):
         user = self.user_repo.find_by_id(id)
-        if not user:
-            raise raise_error(ErrorCode.USER_NOT_FOUND)
 
         self.validate_user_update(body, user)  # ✅ 별도 검증 함수로 분리
         self.apply_updates(user, body)
-        return orm_to_pydantic(self.user_repo.update(user), UserInfoResponse)
+        return self.user_repo.update(user)
 
     def get_user_info(self, id: str):
         user = self.user_repo.find_by_id(id)
         if not user:
             raise raise_error(ErrorCode.USER_NOT_FOUND)
-        return orm_to_pydantic(user, UserInfoResponse)
+        return user
 
     def save_fcm_token(self, id: str, token: str):
         user = self.user_repo.find_by_id(id)
         if not user:
             raise raise_error(ErrorCode.USER_NOT_FOUND)
         user.fcm_token = encrypt_token(token)
-        return dataclass_to_pydantic(self.user_repo.save_fcm_token(user), UserResponse)
+        return self.user_repo.save_fcm_token(user)
 
     def get_users_by_username(self, username: str):
         user_list = self.user_repo.find_by_username_all(username)
-        res = []
-        for user in user_list:
-            res.append(dataclass_to_pydantic(user, UserInfoResponse))
-        return res
+        return user_list
 
     def get_user_by_id(self, user_id: str):
         return self.user_repo.find_by_id(user_id)

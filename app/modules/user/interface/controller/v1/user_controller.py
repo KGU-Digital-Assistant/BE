@@ -9,9 +9,8 @@ from starlette import status
 from containers import Container
 from core.auth import CurrentUser, get_current_user
 from modules.user.application.user_service import UserService
-from modules.user.domain.user import User
-from modules.user.interface.schema.user_schema import CreateUserBody, UserResponse, UpdateUserBody, UserInfoResponse
-from utils.db_utils import dataclass_to_pydantic
+from modules.user.interface.schema.user_schema import CreateUserBody, UserResponse, UpdateUserBody, UserInfoResponse, \
+    UserFcmToken
 from utils.phone_verify import PhoneNumberRequest, VerificationRequest, send_code, verify_code
 from utils.responses.response import APIResponse
 
@@ -19,14 +18,13 @@ from utils.responses.response import APIResponse
 router = APIRouter(prefix="/api/v1/user", tags=["user"])
 
 
-@router.post("/create", response_model=APIResponse)
+@router.post("/create", response_model=UserResponse)
 @inject
 def create_user(
         user: CreateUserBody,
         user_service: UserService = Depends(Provide[Container.user_service]),
 ):
-    new_user = user_service.create_user(user)
-    return APIResponse(status_code=status.HTTP_201_CREATED, data=new_user)
+    return user_service.create_user(user)
 
 
 @router.delete("/delete", response_model=APIResponse)
@@ -36,10 +34,10 @@ def delete_user(
         user_service: UserService = Depends(Provide[Container.user_service]),
 ):
     user_service.delete_user(current_user.id)
-    return APIResponse(status_code=status.HTTP_200_OK)
+    return APIResponse(status_code=status.HTTP_200_OK, message="User deleted")
 
 
-@router.put("/update", response_model=APIResponse)
+@router.put("/update", response_model=UserInfoResponse)
 @inject
 def update_user(
         body: UpdateUserBody,
@@ -50,8 +48,7 @@ def update_user(
     ### 유저 업데이트
     - 변경사항 없는 값은 json 넘길때 아예 제외하면 됨.
     """
-    user = user_service.update_user(current_user.id, body)
-    return APIResponse(status_code=status.HTTP_200_OK, data=user)
+    return user_service.update_user(current_user.id, body)
 
 
 @router.post("/login")
@@ -67,7 +64,7 @@ def login(
     return {"access_token": access_token, "token_type": "bearer"}
 
 
-@router.get("/info", response_model=APIResponse)
+@router.get("/info", response_model=UserInfoResponse)
 @inject
 def get_user_info(
         current_user: Annotated[CurrentUser, Depends(get_current_user)],
@@ -76,11 +73,10 @@ def get_user_info(
     """
     현재 유저 정보 불러오기
     """
-    user = user_service.get_user_info(current_user.id)
-    return APIResponse(status_code=status.HTTP_200_OK, data=user)
+    return user_service.get_user_info(current_user.id)
 
 
-@router.post("/fcm-token", response_model=APIResponse)
+@router.post("/fcm-token", response_model=UserFcmToken)
 @inject
 def save_fcm_token(
         current_user: Annotated[CurrentUser, Depends(get_current_user)],
@@ -89,13 +85,12 @@ def save_fcm_token(
 ):
     """
     클라이언트(프론트)에서 FCM 토큰을 발급받아서 서버에 저장하는 API
-    - 회원가입 후 바로 할 것
+    - 회원가입 후 바로 할 것 권장
     """
-    user = user_service.save_fcm_token(current_user.id, token)
-    return APIResponse(status_code=status.HTTP_200_OK, data=user)
+    return user_service.save_fcm_token(current_user.id, token)
 
 
-@router.get("/username", response_model=APIResponse)
+@router.get("/username", response_model=List[UserInfoResponse])
 @inject
 def get_users_by_username(
         current_user: Annotated[CurrentUser, Depends(get_current_user)],
@@ -105,8 +100,7 @@ def get_users_by_username(
     """
     검색 기능: 검색단어에 포함된 username를 가진 유저 리스트 반환, LIKE "%username%"
     """
-    user_list = user_service.get_users_by_username(username)
-    return APIResponse(status_code=status.HTTP_200_OK, data=user_list)
+    return user_service.get_users_by_username(username)
 
 
 @router.post("/send-code/", response_model=APIResponse)

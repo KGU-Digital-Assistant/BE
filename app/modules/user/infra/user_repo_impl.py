@@ -37,7 +37,8 @@ class UserRepository(IUserRepository, ABC):
             )
             db.add(new_user)
             db.commit()
-        return UserVO(**row_to_dict(new_user))
+
+            return UserVO(**row_to_dict(new_user))
 
     def find_by_email(self, email: str):
         with SessionLocal() as db:
@@ -59,17 +60,17 @@ class UserRepository(IUserRepository, ABC):
         with SessionLocal() as db:
             return db.query(User).filter(User.username == username).first()
 
-    def update(self, user: User):
+    def update(self, _user: User):
         with SessionLocal() as db:
-
-            user.email = user.email
-            user.nickname = user.nickname
-            user.password = user.password
-            user.profile_picture = user.profile_picture
-            user.update_date = user.update_date
+            user = db.query(User).filter(User.id == _user.id).first()
+            user.email = _user.email
+            user.nickname = _user.nickname
+            user.password = _user.password
+            user.profile_picture = _user.profile_picture
+            user.update_date = _user.update_date
 
             db.commit()
-        return user
+            return user
 
     def delete(self, id: str):
         with SessionLocal() as db:
@@ -79,7 +80,6 @@ class UserRepository(IUserRepository, ABC):
 
             db.delete(user)
             db.commit()
-        return True
 
     def save_fcm_token(self, user_vo: User):
         with SessionLocal() as db:
@@ -89,11 +89,9 @@ class UserRepository(IUserRepository, ABC):
 
             user.fcm_token = user_vo.fcm_token
             db.commit()
-        return UserVO(**row_to_dict(user))
+            return UserVO(**row_to_dict(user))
 
     def find_by_username_all(self, username: str):
         with SessionLocal() as db:
             user_list = db.query(User).filter(User.username == username).all()
-
-        # res = [UserVO(**row_to_dict(user)) for user in user_list]
-        return user_list
+            return user_list

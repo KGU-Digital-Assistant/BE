@@ -45,6 +45,10 @@ class UserResponse(BaseModel):
     role: Role
 
 
+class UserFcmToken(UserResponse):
+    fcm_token: str
+
+
 class UserInfoResponse(UserResponse):
     id: str
     username: str
