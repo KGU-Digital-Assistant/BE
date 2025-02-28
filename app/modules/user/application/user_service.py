@@ -1,24 +1,15 @@
 from datetime import datetime
-
-import ulid
-from fastapi import HTTPException, status, Depends
-from sqlalchemy.orm import Session
-from ulid import ULID
-from dependency_injector.wiring import inject, Container, Provide
-
+from dependency_injector.wiring import inject
 from core.auth import create_access_token, Role
 from core.fcm import encrypt_token
-from database import get_db
-from modules.user.domain.repository import user_repo
 from modules.user.domain.repository.user_repo import IUserRepository
 from modules.user.domain.user import User
 from modules.user.interface.schema.user_schema import CreateUserBody, Rank, UpdateUserBody, UserResponse, \
     UserInfoResponse
 from utils.crypto import Crypto
-from utils.db_utils import is_similar, orm_to_pydantic, dataclass_to_pydantic
+from utils.db_utils import orm_to_pydantic, dataclass_to_pydantic
 from utils.exceptions.error_code import ErrorCode
 from utils.exceptions.handlers import raise_error
-from utils.phone_verify import send_verification_code, check_verification_code
 
 
 class UserService:
@@ -102,14 +93,13 @@ class UserService:
         if not user:
             raise raise_error(ErrorCode.USER_NOT_FOUND)
         user.fcm_token = encrypt_token(token)
-        return self.user_repo.save_fcm_token(user)
+        return dataclass_to_pydantic(self.user_repo.save_fcm_token(user), UserResponse)
 
     def get_users_by_username(self, username: str):
         user_list = self.user_repo.find_by_username_all(username)
         res = []
         for user in user_list:
-            if is_similar(user.username, username):
-                res.append(user)
+            res.append(dataclass_to_pydantic(user, UserInfoResponse))
         return res
 
     def get_user_by_id(self, user_id: str):

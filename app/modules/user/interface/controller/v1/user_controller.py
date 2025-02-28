@@ -92,7 +92,7 @@ def save_fcm_token(
     - 회원가입 후 바로 할 것
     """
     user = user_service.save_fcm_token(current_user.id, token)
-    return APIResponse(status_code=status.HTTP_200_OK, data=dataclass_to_pydantic(user, UserResponse))
+    return APIResponse(status_code=status.HTTP_200_OK, data=user)
 
 
 @router.get("/username", response_model=APIResponse)
@@ -106,13 +106,7 @@ def get_users_by_username(
     검색 기능: 검색단어에 포함된 username를 가진 유저 리스트 반환, LIKE "%username%"
     """
     user_list = user_service.get_users_by_username(username)
-    _user_list = []
-    for user in user_list:
-        _user_list.append(dataclass_to_pydantic(user, UserInfoResponse))
-    return APIResponse(status_code=status.HTTP_200_OK, data=_user_list)
-
-
-# @router.post("/upload_profile_picture") -> update로 가능
+    return APIResponse(status_code=status.HTTP_200_OK, data=user_list)
 
 
 @router.post("/send-code/", response_model=APIResponse)

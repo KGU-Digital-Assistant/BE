@@ -37,39 +37,27 @@ class UserRepository(IUserRepository, ABC):
             )
             db.add(new_user)
             db.commit()
-
-            return UserVO(**row_to_dict(new_user))
+        return UserVO(**row_to_dict(new_user))
 
     def find_by_email(self, email: str):
         with SessionLocal() as db:
-            user = db.query(User).filter(User.email == email).first()
-
-        return user
+            return db.query(User).filter(User.email == email).first()
 
     def find_by_id(self, id: str):
         with SessionLocal() as db:
-            user = db.query(User).filter(User.id == id).first()
-
-        return user
-        # return UserVO(**row_to_dict(user))
+            return db.query(User).filter(User.id == id).first()
 
     def find_by_cellphone(self, cellphone: str):
         with SessionLocal() as db:
-            user = db.query(User).filter(User.cellphone == cellphone).first()
-
-        return user
+            return db.query(User).filter(User.cellphone == cellphone).first()
 
     def find_by_nickname(self, nickname: str):
         with SessionLocal() as db:
-            user = db.query(User).filter(User.nickname == nickname).first()
-
-        return user
+            return db.query(User).filter(User.nickname == nickname).first()
 
     def find_by_username(self, username: str):
         with SessionLocal() as db:
-            user = db.query(User).filter(User.username == username).first()
-
-        return user
+            return db.query(User).filter(User.username == username).first()
 
     def update(self, user: User):
         with SessionLocal() as db:
