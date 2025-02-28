@@ -16,10 +16,3 @@ def encrypt_token(token: str) -> str:
 def decrypt_token(encrypted_token: str) -> str:
     return cipher.decrypt(encrypted_token.encode()).decode()
 
-
-# 사용 예제
-fcm_token = "your-fcm-token"
-encrypted_token = encrypt_token(fcm_token)
-print(f"Encrypted Token: {encrypted_token}")
-decrypted_token = decrypt_token(encrypted_token)
-print(f"Decrypted Token: {decrypted_token}")

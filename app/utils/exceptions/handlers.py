@@ -1,20 +1,13 @@
 from fastapi import HTTPException
 
 from utils.exceptions.error_code import ErrorCode
-from fastapi import FastAPI, Request
-from fastapi.responses import JSONResponse
+from utils.responses.response import APIResponse
 
 
-class CustomException(HTTPException):
-    def __init__(self, error: ErrorCode):
-        super().__init__(
-            status_code=error.status_code,
-            detail={"error_code": error.name, "message": error.message}
-        )
-
-
-async def custom_exception_handler(request: Request, exc: CustomException):
-    return JSONResponse(
-        status_code=exc.status_code,
-        content=exc.detail,
+def raise_error(error_code: ErrorCode):
+    """❌ 공통 에러 처리 함수"""
+    raise HTTPException(
+        status_code=error_code.code,
+        detail=APIResponse(status_code=error_code.code, message=error_code.message).dict()
     )
+

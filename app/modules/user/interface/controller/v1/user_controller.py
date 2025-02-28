@@ -1,62 +1,57 @@
-from http.client import HTTPException
 from typing import Annotated, List
 
 from fastapi import APIRouter, BackgroundTasks, Depends
 
 from dependency_injector.wiring import inject, Provide
 from fastapi.security import OAuth2PasswordRequestForm
-from pydantic import BaseModel
-from sqlalchemy.orm import Session
+from starlette import status
 
 from containers import Container
 from core.auth import CurrentUser, get_current_user
-from database import get_db
-from modules.user.application import user_service
 from modules.user.application.user_service import UserService
 from modules.user.domain.user import User
 from modules.user.interface.schema.user_schema import CreateUserBody, UserResponse, UpdateUserBody, UserInfoResponse
-from utils.db_utils import row_to_dict
-from utils.exceptions.error_code import ErrorCode
-from utils.exceptions.handlers import CustomException
+from utils.db_utils import dataclass_to_pydantic
 from utils.phone_verify import PhoneNumberRequest, VerificationRequest, send_code, verify_code
-from utils.responses.response import create_response
-from utils.responses.response_schema import APIResponse
-
-router = APIRouter(prefix="/users")
+from utils.responses.response import APIResponse
 
 
-def dataclass_to_pydantic(user: User) -> UserResponse:
-    return UserResponse(**{key: value for key, value in user.__dict__.items() if key in UserResponse.__annotations__})
+router = APIRouter(prefix="/api/v1/user", tags=["user"])
 
 
-@router.post("/create")
+@router.post("/create", response_model=APIResponse)
 @inject
 def create_user(
         user: CreateUserBody,
         user_service: UserService = Depends(Provide[Container.user_service]),
-        db: Session = Depends(get_db),
 ):
     new_user = user_service.create_user(user)
-    return create_response(dataclass_to_pydantic(new_user))
+    return APIResponse(status_code=status.HTTP_201_CREATED, data=new_user)
 
 
-@router.delete("/delete")
+@router.delete("/delete", response_model=APIResponse)
 @inject
 def delete_user(
         current_user: Annotated[CurrentUser, Depends(get_current_user)],
         user_service: UserService = Depends(Provide[Container.user_service]),
 ):
     user_service.delete_user(current_user.id)
+    return APIResponse(status_code=status.HTTP_200_OK)
 
 
-@router.put("/update")
+@router.put("/update", response_model=APIResponse)
 @inject
 def update_user(
         body: UpdateUserBody,
         current_user: Annotated[CurrentUser, Depends(get_current_user)],
         user_service: UserService = Depends(Provide[Container.user_service]),
 ):
-    return user_service.update_user(current_user.id, body)
+    """
+    ### 유저 업데이트
+    - 변경사항 없는 값은 json 넘길때 아예 제외하면 됨.
+    """
+    user = user_service.update_user(current_user.id, body)
+    return APIResponse(status_code=status.HTTP_200_OK, data=user)
 
 
 @router.post("/login")
@@ -69,11 +64,10 @@ def login(
         username=form_data.username,
         password=form_data.password,
     )
-
     return {"access_token": access_token, "token_type": "bearer"}
 
 
-@router.get("/info", response_model=UserInfoResponse)
+@router.get("/info", response_model=APIResponse)
 @inject
 def get_user_info(
         current_user: Annotated[CurrentUser, Depends(get_current_user)],
@@ -82,7 +76,8 @@ def get_user_info(
     """
     현재 유저 정보 불러오기
     """
-    return user_service.get_user_info(current_user.id)
+    user = user_service.get_user_info(current_user.id)
+    return APIResponse(status_code=status.HTTP_200_OK, data=user)
 
 
 @router.post("/fcm-token", response_model=APIResponse)
@@ -97,10 +92,10 @@ def save_fcm_token(
     - 회원가입 후 바로 할 것
     """
     user = user_service.save_fcm_token(current_user.id, token)
-    return create_response(dataclass_to_pydantic(user))
+    return APIResponse(status_code=status.HTTP_200_OK, data=dataclass_to_pydantic(user, UserResponse))
 
 
-@router.get("/username", response_model=List[UserInfoResponse])
+@router.get("/username", response_model=APIResponse)
 @inject
 def get_users_by_username(
         current_user: Annotated[CurrentUser, Depends(get_current_user)],
@@ -108,10 +103,13 @@ def get_users_by_username(
         user_service: UserService = Depends(Provide[Container.user_service]),
 ):
     """
-    검색 기능: 비슷한 username를 가진 유저 리스트 반환
+    검색 기능: 검색단어에 포함된 username를 가진 유저 리스트 반환, LIKE "%username%"
     """
-    user_list = user_service.get_users_by_username(username, current_user.id)
-    return user_list
+    user_list = user_service.get_users_by_username(username)
+    _user_list = []
+    for user in user_list:
+        _user_list.append(dataclass_to_pydantic(user, UserInfoResponse))
+    return APIResponse(status_code=status.HTTP_200_OK, data=_user_list)
 
 
 # @router.post("/upload_profile_picture") -> update로 가능
@@ -121,13 +119,19 @@ def get_users_by_username(
 def phone_send_code(
         request: PhoneNumberRequest,
 ):
+    """
+    휴대폰 인증번호 보내기
+    """
     send_code(request.phone_number)
-    return create_response()
+    return APIResponse(status_code=status.HTTP_200_OK)
 
 
-@router.post("/verify-code/")
+@router.post("/verify-code/", response_model=APIResponse)
 def phone_verify_code(
         request: VerificationRequest,
 ):
+    """
+    휴대폰 인증번호 검증하기
+    """
     message = verify_code(request.phone_number, request.code)
-    return create_response(message)
+    return APIResponse(status_code=status.HTTP_200_OK, data=message)

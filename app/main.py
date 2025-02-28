@@ -3,12 +3,14 @@ from fastapi import FastAPI
 from starlette.middleware.cors import CORSMiddleware
 
 from containers import Container
-from modules.user.interface.controller import user_controller as user_router
+from modules.user.interface.controller.v1 import user_controller as user_router
+from modules.track.interface.controller.v1 import track_controller as track_router
 
 app = FastAPI()
 app.container = Container()
 
 app.include_router(user_router.router)
+app.include_router(track_router.router)
 
 origins = [
     "*",

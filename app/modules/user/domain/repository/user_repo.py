@@ -2,12 +2,13 @@ from abc import ABCMeta, abstractmethod
 
 from sqlalchemy.orm import Session
 
-from modules.user.domain.user import User as User
+from modules.user.domain.user import User
+from modules.user.interface.schema.user_schema import CreateUserBody
 
 
 class IUserRepository(metaclass=ABCMeta):
     @abstractmethod
-    def save(self, user: User):
+    def save(self, user: CreateUserBody):
         raise NotImplementedError
 
     @abstractmethod

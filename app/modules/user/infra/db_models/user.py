@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, date
 
 import ulid
 from sqlalchemy.orm import Mapped, mapped_column
@@ -11,12 +11,12 @@ from modules.user.interface.schema.user_schema import Rank, Gender
 class User(Base):  # 회원
     __tablename__ = "User"
 
-    id: Mapped[str] = mapped_column(String(length=26), primary_key=True, nullable=False, default=lambda: str(ulid.new()))
+    id: Mapped[str] = mapped_column(String(length=26), primary_key=True, nullable=False)
     username: Mapped[str] = mapped_column(String(length=255), nullable=False, unique=True)  # 회원가입 ID로 사용 (컬럼 이름 고정)
     name: Mapped[str] = mapped_column(String(length=255), nullable=False)  # 실명
     cellphone: Mapped[str] = mapped_column(String(length=255), unique=True, nullable=False)
     gender: Mapped[Gender] = mapped_column(Enum(Gender), nullable=True)  # 1 남자, 0 여자
-    birth: Mapped[Date] = mapped_column(Date, nullable=True)
+    birth: Mapped[date] = mapped_column(Date, nullable=True)
     nickname: Mapped[str] = mapped_column(String(length=255), unique=True, nullable=False)
     rank: Mapped[Rank] = mapped_column(Enum(Rank), nullable=False)
     profile_picture: Mapped[str] = mapped_column(String(length=255), nullable=True)

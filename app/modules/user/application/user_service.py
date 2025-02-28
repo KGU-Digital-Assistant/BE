@@ -12,11 +12,12 @@ from database import get_db
 from modules.user.domain.repository import user_repo
 from modules.user.domain.repository.user_repo import IUserRepository
 from modules.user.domain.user import User
-from modules.user.interface.schema.user_schema import CreateUserBody, Rank, UpdateUserBody
+from modules.user.interface.schema.user_schema import CreateUserBody, Rank, UpdateUserBody, UserResponse, \
+    UserInfoResponse
 from utils.crypto import Crypto
-from utils.db_utils import is_similar
+from utils.db_utils import is_similar, orm_to_pydantic, dataclass_to_pydantic
 from utils.exceptions.error_code import ErrorCode
-from utils.exceptions.handlers import CustomException
+from utils.exceptions.handlers import raise_error
 from utils.phone_verify import send_verification_code, check_verification_code
 
 
@@ -35,60 +36,19 @@ class UserService:
             # background_tasks: BackgroundTasks,
             user: CreateUserBody
     ):
-        _user_email = None
-        _user_nickname = None
-        _user_cellphone = None
-        try:
-            _user_email = self.user_repo.find_by_email(user.email)
-        except HTTPException as e:
-            if e.status_code != 404:
-                raise HTTPException(status_code=e.status_code, detail=e.detail)
-        try:
-            _user_nickname = self.user_repo.find_by_nickname(user.nickname)
-        except HTTPException as e:
-            if e.status_code != 404:
-                raise HTTPException(status_code=e.status_code, detail=e.detail)
-        try:
-            _user_cellphone = self.user_repo.find_by_cellphone(user.cellphone)
-        except HTTPException as e:
-            if e.status_code != 404:
-                raise HTTPException(status_code=e.status_code, detail=e.detail)
+        if self.user_repo.find_by_email(user.email): raise raise_error(ErrorCode.USER_ALREADY_EXIST_EMAIL)
+        if self.user_repo.find_by_nickname(user.nickname): raise raise_error(ErrorCode.USER_ALREADY_EXIST_NICKNAME)
+        if self.user_repo.find_by_cellphone(user.cellphone): raise raise_error(ErrorCode.USER_ALREADY_EXIST_CELLPHONE)
+        if self.user_repo.find_by_username(user.username): raise raise_error(ErrorCode.USER_ALREADY_EXIST_USERNAME)
 
-        if _user_email:
-            raise CustomException(ErrorCode.USER_ALREADY_EXIST_EMAIL)
-        if _user_nickname:
-            raise CustomException(ErrorCode.USER_ALREADY_EXIST_NICKNAME)
-        if _user_cellphone:
-            raise CustomException(ErrorCode.USER_ALREADY_EXIST_CELLPHONE)
-
-        now = datetime.now()
-        new_id = ULID()
-        new_user: User = User(
-            id=str(new_id),
-            username=user.username,
-            nickname=user.nickname,
-            cellphone=user.cellphone,
-            name=user.name,
-            email=user.email,
-            gender=user.gender,
-            rank=Rank.BRONZE,
-            birth=user.birth,
-            password=self.crypto.encrypt(user.password1),
-            create_date=now,
-            update_date=now,
-            fcm_token=None,
-            profile_picture=user.profile_picture,
-            role=Role.USER
-        )
-        self.user_repo.save(new_user)
-
-        return new_user
+        return dataclass_to_pydantic(self.user_repo.save(user), UserResponse)
 
     def login(self, username: str, password: str):
         user = self.user_repo.find_by_username(username)
-
+        if not user:
+            raise raise_error(ErrorCode.USER_NOT_FOUND)
         if not (self.crypto.verify(password, user.password)):
-            raise CustomException(ErrorCode.PASSWORD_INVALID)
+            raise raise_error(ErrorCode.PASSWORD_INVALID)
 
         access_token = create_access_token(
             payload={"user_id": user.id},
@@ -100,29 +60,17 @@ class UserService:
     def delete_user(self, id: str):
         self.user_repo.delete(id)
 
-    def update_user(self, id: str, body: UpdateUserBody):
-        user = self.user_repo.find_by_id(id)
-        _user_email = None
-        _user_nickname = None
-        if not user:
-            raise CustomException(ErrorCode.USER_NOT_FOUND)
+    def validate_user_update(self, body: UpdateUserBody, cur_user: User):
+        """유효성 검사: 닉네임 & 이메일 중복 체크"""
+        nick_user = self.user_repo.find_by_nickname(body.nickname)
+        email_user = self.user_repo.find_by_email(body.email)
+        if body.nickname and nick_user is not None and nick_user.id != cur_user.id:
+            raise raise_error(ErrorCode.USER_ALREADY_EXIST_NICKNAME)
+        if body.email and email_user is not None and email_user.id != cur_user.id:
+            raise raise_error(ErrorCode.USER_ALREADY_EXIST_EMAIL)
 
-        _user_email = (
-            self.user_repo.find_by_nickname(body.nickname)
-            if not (_exc := HTTPException(status_code=404))
-            else None
-        )
-        if _user_email:
-            raise CustomException(ErrorCode.USER_ALREADY_EXIST_EMAIL)
-
-        _user_nickname = (
-            self.user_repo.find_by_cellphone(body.cellphone)
-            if not (_exc := HTTPException(status_code=404))
-            else None
-        )
-        if _user_nickname:
-            raise CustomException(ErrorCode.USER_ALREADY_EXIST_NICKNAME)
-
+    def apply_updates(self, user, body: UpdateUserBody):
+        """사용자 정보 업데이트 적용"""
         if body.nickname:
             user.nickname = body.nickname
         if body.password:
@@ -131,31 +79,38 @@ class UserService:
             user.profile_picture = body.profile_picture
         if body.email:
             user.email = body.email
+
         user.update_date = datetime.now()
 
-        return self.user_repo.update(user)
+    def update_user(self, id: str, body: UpdateUserBody):
+        user = self.user_repo.find_by_id(id)
+        if not user:
+            raise raise_error(ErrorCode.USER_NOT_FOUND)
+
+        self.validate_user_update(body, user)  # ✅ 별도 검증 함수로 분리
+        self.apply_updates(user, body)
+        return orm_to_pydantic(self.user_repo.update(user), UserInfoResponse)
 
     def get_user_info(self, id: str):
-        return self.user_repo.find_by_id(id)
+        user = self.user_repo.find_by_id(id)
+        if not user:
+            raise raise_error(ErrorCode.USER_NOT_FOUND)
+        return orm_to_pydantic(user, UserInfoResponse)
 
     def save_fcm_token(self, id: str, token: str):
         user = self.user_repo.find_by_id(id)
+        if not user:
+            raise raise_error(ErrorCode.USER_NOT_FOUND)
         user.fcm_token = encrypt_token(token)
+        return self.user_repo.save_fcm_token(user)
 
-        try:
-            userVO = self.user_repo.save_fcm_token(user)
-            return userVO
-        except HTTPException as e:
-            raise HTTPException(status_code=e.status_code, detail=e.detail)
-
-    def get_users_by_username(self, username: str, id: str):
-        user = self.user_repo.find_by_id(id)
-        if user is None:
-            raise CustomException(ErrorCode.USER_NOT_FOUND)
-
+    def get_users_by_username(self, username: str):
         user_list = self.user_repo.find_by_username_all(username)
         res = []
         for user in user_list:
             if is_similar(user.username, username):
                 res.append(user)
         return res
+
+    def get_user_by_id(self, user_id: str):
+        return self.user_repo.find_by_id(user_id)
