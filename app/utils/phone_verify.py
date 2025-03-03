@@ -13,7 +13,7 @@ from starlette.config import Config
 from pydantic import BaseModel
 from config import get_settings
 from utils.exceptions.error_code import ErrorCode
-from utils.exceptions.handlers import CustomException
+from utils.exceptions.handlers import raise_error
 
 setting = get_settings()
 
@@ -49,7 +49,7 @@ def send_code(phone_number: str):
         raise HTTPException(status_code=e.status_code, detail=e.detail)
 
     if res is None:
-        raise CustomException(ErrorCode.CODE_SEND_FAIL)
+        raise raise_error(ErrorCode.CODE_SEND_FAIL)
 
 
 def verify_code(phone_number: str, code: str):
@@ -58,7 +58,7 @@ def verify_code(phone_number: str, code: str):
         if success:
             return message
         else:
-            raise CustomException(ErrorCode.CODE_VERIFY_FAIL)
+            raise raise_error(ErrorCode.CODE_VERIFY_FAIL)
     except HTTPException as e:
         raise HTTPException(status_code=e.status_code, detail=e.detail)
 

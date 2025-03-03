@@ -7,19 +7,12 @@ setting = get_settings()
 cipher = Fernet(setting.FERNET_KEY)
 
 
-# 암호화
 def encrypt_token(token: str) -> str:
+    """암호화"""
     return cipher.encrypt(token.encode()).decode()
 
 
-# 복호화
 def decrypt_token(encrypted_token: str) -> str:
+    """복호화"""
     return cipher.decrypt(encrypted_token.encode()).decode()
 
-
-# 사용 예제
-fcm_token = "your-fcm-token"
-encrypted_token = encrypt_token(fcm_token)
-print(f"Encrypted Token: {encrypted_token}")
-decrypted_token = decrypt_token(encrypted_token)
-print(f"Decrypted Token: {decrypted_token}")

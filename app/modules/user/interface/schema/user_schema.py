@@ -42,16 +42,24 @@ class UserResponse(BaseModel):
     username: str
     name: str
     email: str
+    role: Role
+
+
+class UserFcmToken(UserResponse):
+    fcm_token: str
 
 
 class UserInfoResponse(UserResponse):
     id: str
+    username: str
+    name: str
+    email: str
+    role: Role
     nickname: str
     cellphone: str
     gender: Gender
     birth: date
     rank: Rank
-    role: Role
     profile_picture: str
     create_date: datetime
     update_date: datetime

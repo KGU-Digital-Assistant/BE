@@ -9,7 +9,7 @@ from jose import jwt, JWTError
 
 from config import Settings
 from utils.exceptions.error_code import ErrorCode
-from utils.exceptions.handlers import CustomException
+from utils.exceptions.handlers import raise_error
 
 settings = Settings()
 
@@ -47,7 +47,7 @@ def decode_access_token(token: str):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
 
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/users/login")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/user/login")
 
 
 @dataclass
@@ -65,7 +65,7 @@ def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]):
     user_id = payload.get("user_id")
     role = payload.get("role")
     if not user_id or not role or role != Role.USER.value:
-        raise CustomException(ErrorCode.USER_NOT_AUTHENTICATED)
+        raise raise_error(ErrorCode.USER_NOT_AUTHENTICATED)
 
     return CurrentUser(user_id, Role(role))
 
