@@ -1,10 +1,8 @@
 from dataclasses import dataclass, field
 from typing import List, Optional
 import datetime
-import ulid
-from enum import Enum
-
-from modules.track.infra.db_models.track import TrackRoutine
+from dataclasses import dataclass
+# from pydantic.dataclasses import dataclass as pydantic_dataclass
 from modules.track.interface.schema.track_schema import MealTime
 
 
@@ -16,6 +14,7 @@ class TrackRoutineDate:
     meal_time: MealTime
     date: int  # 몇일 차 인지
     clock: datetime.time = field(default_factory=lambda: datetime.time(0, 0, 0))
+    routine: Optional["TrackRoutine"] = field(default=None)
 
 
 @dataclass
@@ -51,3 +50,5 @@ class Track:  # 식단트랙
 
     # 관계 매핑을 위한 필드
     routines: List[TrackRoutine] = field(default_factory=list)
+
+# track.routines

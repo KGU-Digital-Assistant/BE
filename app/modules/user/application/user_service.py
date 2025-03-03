@@ -31,7 +31,8 @@ class UserService:
         if self.user_repo.find_by_nickname(user.nickname): raise raise_error(ErrorCode.USER_ALREADY_EXIST_NICKNAME)
         if self.user_repo.find_by_cellphone(user.cellphone): raise raise_error(ErrorCode.USER_ALREADY_EXIST_CELLPHONE)
         if self.user_repo.find_by_username(user.username): raise raise_error(ErrorCode.USER_ALREADY_EXIST_USERNAME)
-        return dataclass_to_pydantic(self.user_repo.save(user), UserResponse)
+        user.password1 = self.crypto.encrypt(user.password1)
+        return self.user_repo.save(user)
 
     def login(self, username: str, password: str):
         user = self.user_repo.find_by_username(username)

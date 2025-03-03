@@ -44,7 +44,7 @@ class TrackRoutine(Base):  # 식단트랙 루틴
     delete: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)  # 삭제 여부
 
     track: Mapped["Track"] = relationship("Track", back_populates="routines")
-    routine_dates: Mapped[list["TrackRoutineDate"]] = relationship("TrackRoutineDate", back_populates="routine")
+    routine_dates: Mapped[list["TrackRoutineDate"]] = relationship("TrackRoutineDate", back_populates="routine", cascade="all, delete-orphan")
 
 
 class TrackRoutineDate(Base):
