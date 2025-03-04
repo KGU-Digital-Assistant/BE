@@ -3,7 +3,14 @@ from fastapi import HTTPException, status
 
 
 class ErrorCode(Enum):
+    # Track 관련 에러 코드
+    TRACK_ROUTINE_DATE_NOT_FOUND = (status.HTTP_404_NOT_FOUND, "루틴 Date가 존재하지 않습니다.")
+    TRACK_ROUTINE_NOT_FOUND = (status.HTTP_404_NOT_FOUND, "루틴이 존재하지 않습니다.")
+    TRACK_NOT_FOUND = (status.HTTP_404_NOT_FOUND, "트랙이 존재하지 않습니다.")
 
+    # 인증
+    CODE_VERIFY_FAIL = (status.HTTP_400_BAD_REQUEST, "인증 코드가 올바르지 않습니다.")
+    CODE_SEND_FAIL = (status.HTTP_502_BAD_GATEWAY, "휴대폰 인증 코드 발송에 실패했습니다.")
     UNPROCESSABLE_ENTITY = (status.HTTP_422_UNPROCESSABLE_ENTITY, "올바른 요청이지만 요청된 지시에 따를 수 없습니다.")
 
     # User 관련 에러 코드
@@ -14,6 +21,7 @@ class ErrorCode(Enum):
     USER_ALREADY_EXIST_CELLPHONE = (status.HTTP_409_CONFLICT, "중복된 휴대폰 번호입니다.")
     USER_ALREADY_EXIST_EMAIL = (status.HTTP_409_CONFLICT, "중복된 이메일 입니다")
     USER_ALREADY_EXIST_NICKNAME = (status.HTTP_409_CONFLICT, " 중복된 닉네임 입니다.")
+    USER_ALREADY_EXIST_USERNAME = (status.HTTP_409_CONFLICT, "중복된 username입니다.")
 
     # MealDay 관련 에러 코드
     MEALDAY_NOT_FOUND = (status.HTTP_404_NOT_FOUND, "식단(일일)가 존재하지 않습니다.")
@@ -30,10 +38,6 @@ class ErrorCode(Enum):
     MEMBER_NOT_ADMIN = (status.HTTP_403_FORBIDDEN, "관리자가 아닙니다")
     MYINFO_NOT_FOUND = (status.HTTP_404_NOT_FOUND, "내 정보를 찾을 수 없습니다")
 
-    @property
-    def status_code(self):
-        return self.value[0]
-
-    @property
-    def message(self):
-        return self.value[1]
+    def __init__(self, code, message):
+        self.code = code
+        self.message = message

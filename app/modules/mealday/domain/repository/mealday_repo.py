@@ -13,3 +13,10 @@ class IMealDayRepository(metaclass=ABCMeta):
     def find_by_date(self, user_id: str, record_date: date) -> MealDay:
         raise NotImplementedError
 
+    @abstractmethod
+    def find_by_year_month(self, user_id:str, year: int, month: int):
+        raise  NotImplementedError
+
+    def update(self, _mealday: MealDay):
+        raise NotImplementedError
+

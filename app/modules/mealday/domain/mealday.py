@@ -22,4 +22,4 @@ class MealDay:
     gb_fat: str | None
     weight: float | None
     routine_success_rate: float | None
-    track_id: int
+    track_id: str | None

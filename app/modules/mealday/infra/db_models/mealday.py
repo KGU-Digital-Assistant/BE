@@ -25,7 +25,7 @@ class MealDay(Base):
     gb_fat: Mapped[str] = mapped_column(String(length=10), nullable=True, default=None)
     weight: Mapped[float] = mapped_column(Float, nullable=True, default=0.0)
     routine_success_rate: Mapped[float] = mapped_column(Float, nullable=True, default=None)
-    track_id: Mapped[int] = mapped_column(Integer, ForeignKey("Track.id"), nullable=True, default=None)
+    track_id: Mapped[str] = mapped_column(String, ForeignKey("Track.id"), nullable=True, default=None)
 
     __table_args__ = (
         UniqueConstraint('user_id', 'record_date', name='_user_date_daily_uc'),

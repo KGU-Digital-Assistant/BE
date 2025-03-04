@@ -25,7 +25,70 @@ class CreateMealDayBody(BaseModel):
     gb_fat: Optional[str] = Field(default=None, max_length=10, description="지방 유형")
     weight: Optional[float] = Field(default=0.0, ge=0, description="금일 몸무게(kg)")
     routine_success_rate: Optional[float] = Field(default=None, ge=0, le=100, description="루틴 성공률(%)")
-    track_id: Optional[int] = Field(default=None, description="Track ID, 해당일 Track 여부")
+    track_id: Optional[str] = Field(default=None, description="Track ID, 해당일 Track 여부")
 
-class MealDayResponse_date(BaseModel):
+class MealDayResponse_Date(BaseModel):
+    user_id: str
     record_date: date
+
+class MealDayResponse_Full(BaseModel):
+    id: str
+    user_id: str
+    record_date: date
+    water: float | None
+    coffee: float | None
+    alcohol: float | None
+    carb: float | None
+    protein: float | None
+    fat: float | None
+    cheating: int | None
+    goalcalorie: float | None
+    nowcalorie: float | None
+    burncalorie: float | None
+    gb_carb: str | None
+    gb_protein: str | None
+    gb_fat: str | None
+    weight: float | None
+    routine_success_rate: float | None
+    track_id: str | None
+
+class MealDayResponse_Nutrient(BaseModel):
+    carb: float | None
+    protein: float | None
+    fat: float | None
+    gb_carb: float | None
+    gb_protein: float | None
+    gb_fat: float | None
+
+class MealDayResponse_Cheating(BaseModel):
+    cheating: int | None
+
+class MealDayResponse_WCA(BaseModel):
+    water:float | None
+    coffee: float | None
+    alcohol: float | None
+
+class MealDayResponse_Calorie(BaseModel): ## 목표, 현재 칼로리
+    goalcalorie: float | None
+    nowcalorie: float | None
+
+class MealDayResponse_TodayCalorie(BaseModel):
+    todaycalorie: float  | None
+    goalcalorie: float  | None
+    nowcalorie: float  | None
+    burncalorie: float  | None
+    weight : float | None
+
+class MealDayResponse_RecordCount(BaseModel):
+    record_count: int | None
+    days: int | None
+
+class MealDayResponse_Avg_Calorie(BaseModel):
+    calorie: float | None
+
+class UpdateMealDayBody(BaseModel):
+    weight: Optional[float] = None
+    burncalorie: Optional[float] = None
+    water: Optional[float] = None
+    coffee: Optional[float] = None
+    alcohol: Optional[float] = None
