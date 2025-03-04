@@ -2,20 +2,21 @@ from abc import ABCMeta, abstractmethod
 
 from sqlalchemy.orm import Session
 
-from modules.user.domain.user import User as User
+from modules.user.domain.user import User
+from modules.user.interface.schema.user_schema import CreateUserBody
 
 
 class IUserRepository(metaclass=ABCMeta):
     @abstractmethod
-    def save(self, user: User):
-        raise NotImplementedError
-
-    @abstractmethod
-    def find_by_id(self, user_id: str) -> User:
+    def save(self, user: CreateUserBody):
         raise NotImplementedError
 
     @abstractmethod
     def find_by_email(self, email):
+        raise NotImplementedError
+
+    @abstractmethod
+    def find_by_id(self, user_id: str) -> User:
         raise NotImplementedError
 
     @abstractmethod
@@ -36,4 +37,12 @@ class IUserRepository(metaclass=ABCMeta):
 
     @abstractmethod
     def find_by_username(self, username: str):
+        raise NotImplementedError
+
+    @abstractmethod
+    def save_fcm_token(self, user: User):
+        raise NotImplementedError
+
+    @abstractmethod
+    def find_by_username_all(self, username: str):
         raise NotImplementedError

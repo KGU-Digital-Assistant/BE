@@ -2,8 +2,8 @@ from dependency_injector import containers, providers
 import ulid
 
 from database import get_db, SessionLocal
-#from modules.track.application.track_service import TrackService
-#from modules.track.infra.repository.track_repo_impl import TrackRepository
+from modules.track.application.track_service import TrackService
+from modules.track.infra.repository.track_repo_impl import TrackRepository
 from modules.user.application.user_service import UserService
 from modules.user.infra.user_repo_impl import UserRepository
 from modules.mealday.infra.mealday_repo_impl import MealDayRepository
@@ -37,9 +37,9 @@ class Container(containers.DeclarativeContainer):
         crypto = crypto
     )
 
-    # track_repo = providers.Factory(TrackRepository)
-    # track_service = providers.Factory(
-    #     TrackService,
-    #     track_repo=track_repo,
-    #     user_service=user_service
-    # )
+    track_repo = providers.Factory(TrackRepository)
+    track_service = providers.Factory(
+        TrackService,
+        track_repo=track_repo,
+        user_service=user_service
+    )

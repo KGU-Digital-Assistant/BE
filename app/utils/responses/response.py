@@ -1,14 +1,10 @@
-from typing import Any, List, Optional
-from .response_schema import APIResponse, Metadata, Status
+# app/utils/api_response.py
 
-SUCCESS_STATUS = Status(code=200, message="Request successful")
+from pydantic import BaseModel
+from typing import Any, Optional
 
 
-def create_response(data: Optional[Any] = None, total_count: Optional[int] = None):
-    metadata = Metadata(total_count=total_count) if total_count is not None else None
-    results = [data] if data and not isinstance(data, list) else data
-    return APIResponse(
-        status=SUCCESS_STATUS,
-        metadata=metadata,
-        results=results,
-    )
+class APIResponse(BaseModel):
+    status_code: int  # ✅ HTTP 상태 코드
+    message: str = "success" # ✅ 응답 메시지
+    data: Optional[Any] = None  # ✅ 성공 시 데이터
