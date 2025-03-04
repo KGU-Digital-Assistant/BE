@@ -80,11 +80,9 @@ class MealDayResponse_TodayCalorie(BaseModel):
     weight : float | None
 
 class MealDayResponse_RecordCount(BaseModel):
-    record_count: int | None
-    days: int | None
-
-class MealDayResponse_Avg_Calorie(BaseModel):
-    calorie: float | None
+    record_count: Optional[int] = None
+    days: Optional[int] = None
+    calorie: Optional[float] = None
 
 class UpdateMealDayBody(BaseModel):
     weight: Optional[float] = None

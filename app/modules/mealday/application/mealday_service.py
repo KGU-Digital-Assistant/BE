@@ -7,7 +7,7 @@ from datetime import date, datetime, timedelta
 from modules.mealday.domain.repository.mealday_repo import IMealDayRepository
 from modules.mealday.domain.mealday import MealDay as MealDayV0
 from modules.mealday.interface.schema.mealday_schema import CreateMealDayBody, MealDayResponse_Date, MealDayResponse_Full, \
-    UpdateMealDayBody
+    UpdateMealDayBody, MealDayResponse_RecordCount
 from utils.crypto import Crypto
 from utils.db_utils import orm_to_pydantic, dataclass_to_pydantic
 from utils.exceptions.error_code import ErrorCode
@@ -76,15 +76,8 @@ class MealDayService:
         except ValueError:
             raise HTTPException(status_code=400, detail="Invalid date format")
 
-        # 해당 월의 모든 날짜에 대해 반복합니다.
-        date_iter = first_day
-        while date_iter <= last_day:
-            meal = self.mealday_repo.find_by_date(user_id = user_id, record_date = date_iter)
-            if not meal:
-                new_mealday = self.create_mealday(user_id, date_iter)
-                self.mealday_repo.save(new_mealday)
-            # 다음 날짜로 이동
-            date_iter += timedelta(days=1)
+        count = self.mealday_repo.save_many(user_id, first_day = first_day, last_day = last_day)
+        return count
 
     def find_mealday_by_date(self, user_id: str, record_date: date):
         mealday = self.mealday_repo.find_by_date(user_id=user_id, record_date=record_date)
@@ -111,18 +104,11 @@ class MealDayService:
             last_day = datetime(year, month, monthrange(year, month)[1]).date()
         except ValueError:
             raise HTTPException(status_code=400, detail="Invalid date format")
-        record_count = 0
-        # 해당 월의 모든 날짜에 대해 반복
-        date_iter = first_day
-        while date_iter <= last_day:
-            meal = self.mealday_repo.find_by_date(user_id = user_id, record_date = date_iter)
-            date_iter += timedelta(days=1)
-            if meal and meal.nowcalorie > 0.0:
-                record_count += 1
+        body: MealDayResponse_RecordCount = self.mealday_repo.find_record_count(user_id, first_day=first_day,last_day=last_day)
 
-        days = (date_iter - first_day).days
+        days = (last_day - first_day).days + 1
 
-        return {"record_count": record_count, "days": days}
+        return {"record_count": body.record_count, "days": days}
 
     def get_mealday_avg_calorie(self, user_id: str, year: int, month: int):
         try:
@@ -131,18 +117,10 @@ class MealDayService:
             last_day = datetime(year, month, monthrange(year, month)[1]).date()
         except ValueError:
             raise HTTPException(status_code=400, detail="Invalid date format")
-        total_calorie = 0
-        count = 0
-        # 해당 월의 모든 날짜에 대해 반복
-        date_iter = first_day
-        while date_iter <= last_day:
-            meal = self.mealday_repo.find_by_date(user_id = user_id, record_date = date_iter)
-            date_iter += timedelta(days=1)
-            if meal and meal.nowcalorie > 0.0:
-                count += 1
-                total_calorie += meal.nowcalorie
-        if count > 0:
-            avg_calorie = total_calorie / count
+
+        body: MealDayResponse_RecordCount = self.mealday_repo.find_record_count(user_id,first_day=first_day,last_day=last_day)
+        if body.record_count > 0:
+            avg_calorie = body.calorie / body.record_count
         else:
             avg_calorie = 0
         return {"calorie": avg_calorie}

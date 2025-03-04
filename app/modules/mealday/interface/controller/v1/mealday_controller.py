@@ -14,7 +14,7 @@ from modules.mealday.application.mealday_service import MealDayService
 from modules.mealday.domain.mealday import MealDay
 from modules.mealday.interface.schema.mealday_schema import CreateMealDayBody,MealDayResponse_Date, MealDayResponse_Full,\
     MealDayResponse_Nutrient, MealDayResponse_Cheating, MealDayResponse_WCA, MealDayResponse_Calorie, MealDayResponse_TodayCalorie,\
-    MealDayResponse_RecordCount, MealDayResponse_Avg_Calorie, UpdateMealDayBody
+    MealDayResponse_RecordCount, UpdateMealDayBody
 from utils.responses.response import APIResponse
 
 router = APIRouter(prefix="/meal_day", tags=["mealday"])
@@ -43,7 +43,8 @@ def create_mealday_by_month(
     특정 월 동안의 식단일일(MealDay) db생성 : 앱실행시(해당월 입력) 해당기간에 생성
     - 입력예시 : year = 2024, month = 6
     """
-    return mealday_service.create_mealday_by_month(current_user.id,year,month)
+    created_count = mealday_service.create_mealday_by_month(current_user.id,year,month)
+    return APIResponse(status_code=status.HTTP_200_OK, message=f"{created_count}meal days created")
 
 @router.get("/get/mealday/{user_id}/{daytime}", response_model=MealDayResponse_Full)
 @inject
@@ -172,7 +173,7 @@ def get_meal_record_count(
     """
     return mealday_service.get_mealday_record_count_by_date(current_user.id,year,month)
 
-@router.get("/get/meal_avg_calorie/{year}/{month}", response_model=MealDayResponse_Avg_Calorie)
+@router.get("/get/meal_avg_calorie/{year}/{month}", response_model=MealDayResponse_RecordCount)
 @inject
 def get_meal_avg_calorie(
         year: Annotated[int, Path(description="생성년도 (형식: 2024)")],

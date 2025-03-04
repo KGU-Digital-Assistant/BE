@@ -10,13 +10,22 @@ class IMealDayRepository(metaclass=ABCMeta):
         raise NotImplementedError
 
     @abstractmethod
+    def save_many(self, user_id: str, first_day: date, last_day: date):
+        raise NotImplementedError
+
+    @abstractmethod
     def find_by_date(self, user_id: str, record_date: date) -> MealDay:
+        raise NotImplementedError
+
+    @abstractmethod
+    def find_record_count(self, user_id: str, first_day: date, last_day :date):
         raise NotImplementedError
 
     @abstractmethod
     def find_by_year_month(self, user_id:str, year: int, month: int):
         raise  NotImplementedError
 
+    @abstractmethod
     def update(self, _mealday: MealDay):
         raise NotImplementedError
 
