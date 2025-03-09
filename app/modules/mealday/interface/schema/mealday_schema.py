@@ -4,7 +4,7 @@ from typing import Optional
 
 from pydantic import BaseModel, EmailStr, field_validator, Field
 from pydantic_core.core_schema import FieldValidationInfo
-
+from modules.track.interface.schema.track_schema import MealTime
 
 class CreateMealDayBody(BaseModel):
     id: Optional[str] = Field(default=None, description="ID, 입력 불필요")  #자동 증가용
@@ -90,3 +90,51 @@ class UpdateMealDayBody(BaseModel):
     water: Optional[float] = None
     coffee: Optional[float] = None
     alcohol: Optional[float] = None
+
+########################################################################
+##############MealHour##################################################
+########################################################################
+
+class MealHourResponse_Full(BaseModel):
+    id: str
+    user_id: str
+    daymeal_id: str
+    meal_time: MealTime
+    name: Optional[str] = None
+    picture: Optional[str] = None
+    text: Optional[str] = None
+    record_datetime: datetime
+    heart: Optional[bool] = None
+    carb: Optional[float] = None
+    protein: Optional[float] = None
+    fat: Optional[float] = None
+    calorie: Optional[float] = None
+    unit: Optional[str] = None
+    size: Optional[float] = None
+    track_goal: Optional[bool] = None
+    label: Optional[int] = None
+
+class UpdateMealHourBody(BaseModel):
+    heart: Optional[bool] = None
+    track_goal: Optional[bool] = None
+    size: Optional[float] = None
+
+class MealHourResponse_Full_Picture(BaseModel):
+    id: str
+    user_id: str
+    daymeal_id: str
+    meal_time: MealTime
+    name: Optional[str] = None
+    picture: Optional[str] = None
+    text: Optional[str] = None
+    record_datetime: datetime
+    heart: Optional[bool] = None
+    carb: Optional[float] = None
+    protein: Optional[float] = None
+    fat: Optional[float] = None
+    calorie: Optional[float] = None
+    unit: Optional[str] = None
+    size: Optional[float] = None
+    track_goal: Optional[bool] = None
+    label: Optional[int] = None
+    image_url: Optional[str] = None

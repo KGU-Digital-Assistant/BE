@@ -26,3 +26,10 @@ class User:
     # mentor_id: str | None
     create_date: datetime
     update_date: datetime
+
+# @dataclass
+# class Mentor:
+#     id: str
+#     user_id: str
+#     gym: str | None
+#     FA: bool | None
