@@ -1,7 +1,7 @@
 from datetime import datetime, date
 
 import ulid
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy import String, Boolean, DateTime, Enum, Date
 from database import Base
 from core.auth import Role

@@ -2,19 +2,8 @@ from dataclasses import dataclass, field
 from typing import List, Optional
 import datetime
 from dataclasses import dataclass
-# from pydantic.dataclasses import dataclass as pydantic_dataclass
+
 from modules.track.interface.schema.track_schema import MealTime
-
-
-@dataclass
-class TrackRoutineDate:
-    id: str
-    routine_id: str
-    weekday: int  # 0 ~ 6
-    meal_time: MealTime
-    date: int  # 몇일 차 인지
-    clock: datetime.time = field(default_factory=lambda: datetime.time(0, 0, 0))
-    routine: Optional["TrackRoutine"] = field(default=None)
 
 
 @dataclass
@@ -22,9 +11,13 @@ class TrackRoutine:  # 식단트랙 루틴
     id: str
     track_id: str
     title: str
+    mealtime: MealTime
+    days: int  # 몇일 차 인지
     calorie: float = field(default=0.0)  # 목표 칼로리
     delete: bool = field(default=False)  # 삭제 여부
-    routine_dates: List[TrackRoutineDate] = field(default_factory=list)
+    clock: datetime.time = field(default_factory=lambda: datetime.time(0, 0, 0))
+    image_url: str = None
+
     track: Optional["Track"] = field(default=None)  # ✅ 기본값 추가
 
 
@@ -47,8 +40,8 @@ class Track:  # 식단트랙
     share_count: int = field(default=0)
     alone: bool = field(default=True)
     daily_calorie: float = field(default=0.0)
+    image_url: Optional[str] = None
 
     # 관계 매핑을 위한 필드
     routines: List[TrackRoutine] = field(default_factory=list)
 
-# track.routines
