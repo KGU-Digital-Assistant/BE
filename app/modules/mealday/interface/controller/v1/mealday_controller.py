@@ -17,7 +17,7 @@ from modules.mealday.interface.schema.mealday_schema import CreateMealDayBody,Me
     MealDayResponse_RecordCount, UpdateMealDayBody
 from utils.responses.response import APIResponse
 
-router = APIRouter(prefix="/meal_day", tags=["mealday"])
+router = APIRouter(prefix="/api/v1/meal_day", tags=["mealday"])
 
 
 @router.post("/post/meal_day/{daytime}", response_model=MealDayResponse_Date)
