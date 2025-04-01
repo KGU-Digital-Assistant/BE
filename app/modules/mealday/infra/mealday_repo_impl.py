@@ -1,16 +1,19 @@
 from abc import ABC
 from ulid import ULID
+from typing import List
 from fastapi import HTTPException, Depends
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from datetime import date, datetime, timedelta
 from calendar import monthrange
 from database import SessionLocal, get_db
 from modules.mealday.domain.repository.mealday_repo import IMealDayRepository
 from modules.mealday.domain.mealday import MealDay as MealDayVO
-from modules.mealday.domain.mealday import MealHour as MealHourVO
-from modules.mealday.infra.db_models.mealday import MealDay, MealHour, Food
-from modules.mealday.interface.schema.mealday_schema import MealDayResponse_RecordCount
+from modules.mealday.domain.mealday import Meal as MealVO
+from modules.mealday.infra.db_models.mealday import MealDay, Food, Dish, Meal
+from modules.mealday.interface.schema.mealday_schema import Dish_with_datetime,Dish_Full
 from modules.track.interface.schema.track_schema import MealTime
+from modules.track.infra.db_models.track_participant import TrackParticipant
+from modules.track.infra.db_models.track import Track
 from utils.db_utils import row_to_dict
 from utils.exceptions.error_code import ErrorCode
 from utils.exceptions.handlers import raise_error
@@ -24,6 +27,7 @@ class MealDayRepository(IMealDayRepository, ABC):
                 id=mealday.id,
                 user_id=mealday.user_id,
                 record_date=mealday.record_date,
+                update_date=datetime.utcnow(),
                 water=mealday.water or 0.0,
                 coffee=mealday.coffee or 0.0,
                 alcohol=mealday.alcohol or 0.0,
@@ -56,6 +60,7 @@ class MealDayRepository(IMealDayRepository, ABC):
                         id=str(ULID()),
                         user_id=user_id,
                         record_date=date_iter,
+                        update_datetime=datetime.utcnow(),
                         water=0.0,
                         coffee=0.0,
                         alcohol=0.0,
@@ -80,23 +85,48 @@ class MealDayRepository(IMealDayRepository, ABC):
                 db.commit()
             return count
 
+    def save_many_mealday_by_track_id(self, user_id: str, track_id: str):
+        with SessionLocal() as db:
+            track = db.query(Track).filter(Track.id == track_id).first()
+            date_iter = track.start_date
+            last_day =track.finish_date
+            count = 0
+            while date_iter <= last_day:
+                meal = db.query(MealDay).filter(MealDay.user_id == user_id, MealDay.record_date == date_iter).first()
+                if not meal:
+                    new_mealday = MealDay(
+                        id=str(ULID()),
+                        user_id=user_id,
+                        record_date=date_iter,
+                        update_datetime=datetime.utcnow(),
+                        water=0.0,
+                        coffee=0.0,
+                        alcohol=0.0,
+                        carb=0.0,
+                        protein=0.0,
+                        fat=0.0,
+                        cheating=0,
+                        goalcalorie=0.0,
+                        nowcalorie=0.0,
+                        burncalorie=0.0,
+                        gb_carb=None,
+                        gb_protein=None,
+                        gb_fat=None,
+                        weight=0.0,
+                        routine_success_rate=None,
+                        track_id=track_id
+                    )
+                    db.add(new_mealday)
+                    count += 1
+                date_iter += timedelta(days=1)
+            if count>=1:
+                db.commit()
+            return count
+
     def find_by_date(self, user_id: str, record_date: date) -> MealDayVO:
         with SessionLocal() as db:
             return db.query(MealDay).filter(MealDay.user_id == user_id, MealDay.record_date == record_date).first()
 
-    def find_record_count(self, user_id: str, first_day: str, last_day: str):
-        with SessionLocal() as db:
-            record_count = 0
-            calorie = 0
-            date_iter = first_day
-            while date_iter <= last_day:
-                meal = db.query(MealDay).filter(MealDay.user_id == user_id, MealDay.record_date == date_iter).first()
-                date_iter += timedelta(days=1)
-                if meal and meal.nowcalorie > 0.0:
-                    record_count += 1
-                    calorie += meal.nowcalorie
-
-            return MealDayResponse_RecordCount(record_count=record_count, calorie=calorie)
 
     def find_by_year_month(self, user_id:str, year: int, month: int):
         with SessionLocal() as db:
@@ -113,6 +143,7 @@ class MealDayRepository(IMealDayRepository, ABC):
             mealday.water = _mealday.water
             mealday.coffee = _mealday.coffee
             mealday.alcohol = _mealday.alcohol
+            mealday.update_datetime = datetime.utcnow()
             db.commit()
             return mealday
 
@@ -120,100 +151,141 @@ class MealDayRepository(IMealDayRepository, ABC):
     ##############MealHour##################################################
     ########################################################################
 
-    def find_mealhour_by_id(self, user_id: str, mealhour_id: str):
+    def find_meal_by_date(self, user_id: str, record_date: date):
         with SessionLocal() as db:
-            return db.query(MealHour).filter(MealHour.id == mealhour_id, MealHour.user_id==user_id).first()
+            return (db.query(Meal).join(Meal, MealDay.id == Meal.mealday_id)
+                .join(Dish, Dish.meal_id == Meal.id).filter(MealDay.user_id==user_id, MealDay.record_date==record_date)
+                .first())
+
+    def get_all_dishes_by_track_id(self, user_id: str, track_id: str):
+        with SessionLocal() as db:
+            track = db.query(Track).filter(Track.id == track_id).first()
+            date_iter = track.start_date
+            last_day =track.finish_date
+            dishes=[]
+            while date_iter <= last_day:
+                mealday = (
+                    db.query(MealDay)
+                    .options(
+                        joinedload(MealDay.meals).joinedload(Meal.dishes)
+                    )
+                    .filter(
+                        MealDay.user_id == user_id,
+                        MealDay.record_date == date_iter,
+                        MealDay.track_id == track_id
+                    )
+                    .first()
+                )
+                if mealday:
+                    for meal in mealday.meals:
+                        if meal and meal.dishes:
+                            dishes_full = [Dish_Full.from_orm(dish) for dish in meal.dishes]
+                            dishes.append(Dish_with_datetime(
+                                record_date=mealday.record_date,
+                                mealtime=meal.mealtime,
+                                dishes=dishes_full
+                            ))
+                date_iter += timedelta(days=1)
+
+            return dishes
 
 
-    def find_mealhour_by_date(self, user_id: str, record_date: date, mealtime: MealTime):
+    def create_meal(self, user_id: str, record_date: date, mealtime: MealTime):
         with SessionLocal() as db:
-            return (
-                db.query(MealHour)
-                .join(MealDay, MealHour.daymeal_id == MealDay.id)
-                .filter(MealDay.user_id == user_id, MealDay.record_date == record_date, MealHour.meal_time == mealtime)
+            mealday = db.query(MealDay).filter(MealDay.user_id==user_id, MealDay.record_date==record_date).first()
+            new_meal = Meal(
+                check = False,
+                mealtime = mealtime,
+                mealday_id = mealday.id
+            )
+            db.add(new_meal)
+            db.commit()
+            return MealVO(**row_to_dict(new_meal))
+
+    def create_dishes(self, user_id: str, meal_id: str,name: List[str], calorie: List[str], picture_path: List[str], mealday_id: str):
+        with SessionLocal() as db:
+            mealday = db.query(MealDay).filter(MealDay.id ==mealday_id).first()
+            trackparticipant = db.query(TrackParticipant).filter(TrackParticipant.user_id==user_id,TrackParticipant.track_id==mealday.track_id).first()
+            for i in range(len(name)):
+                food = db.query(Food).filter(Food.name == name[i]).first()
+                dish_label = food.label if food and food.label is not None else None
+                new_dish = Dish(
+                    id=str(ULID()),
+                    user_id=user_id,
+                    meal_id=meal_id,
+                    name=name[i],
+                    picture=picture_path[i],
+                    text=None,
+                    record_datetime=datetime.utcnow(),
+                    update_datetime=datetime.utcnow(),
+                    heart = False,
+                    carb = 0.0,
+                    protein =0.0,
+                    fat = 0.0,
+                    calorie = calorie[i],
+                    unit = "gram",
+                    size = 100.0,
+                    track_goal = False,
+                    label = dish_label,
+                    trackpart_id = trackparticipant.id,
+                )
+                db.add(new_dish)
+                mealday.nowcalorie += calorie[i]
+            db.add(mealday)
+            db.commit()
+
+    def find_dish(self, user_id: str, dish_id: str):
+        with SessionLocal() as db:
+            return db.query(Dish).filter(Dish.id == dish_id, Dish.user_id==user_id).first()
+
+    def delete_dish(self, user_id: str, dish_id: str):
+        with SessionLocal() as db:
+            mealday = (
+                db.query(MealDay)
+                .join(Meal, MealDay.id == Meal.mealday_id)
+                .join(Dish, Dish.meal_id == Meal.id)
+                .filter(Dish.id == dish_id)
                 .first()
             )
-
-    def find_mealhour_all(self, user_id: str, record_date: date):
-        with SessionLocal() as db:
-            today_meals = (
-                db.query(MealHour)
-                .join(MealDay, MealHour.daymeal_id == MealDay.id)
-                .filter(MealDay.user_id == user_id, MealDay.record_date == record_date)
-                .all()
-            )
-            meals = []
-            for meal in today_meals:
-                meals.append(meal)
-            return meals
-
-    def create_mealhour(self, user_id: str, record_datetime: datetime, mealtime: MealTime, file_name: str,
-                        food_label: int, text: str):
-        with SessionLocal() as db:
-            food_info = db.query(Food).filter(Food.label == food_label).first()
-            mealday = db.query(MealDay).filter(MealDay.user_id == user_id, MealDay.record_date == record_datetime.date()).first()
-            mealday.carb += food_info.carb
-            mealday.protein += food_info.protein
-            mealday.fat += food_info.fat
-            mealday.nowcalorie += food_info.calorie
-            mealhour = MealHour(
-                id=str(ULID()),
-                user_id=user_id,
-                daymeal_id=mealday.id,
-                meal_time=mealtime,
-                name=food_info.name,
-                picture=file_name,
-                text=text,
-                record_datetime=record_datetime,  # 현재 시간을 기본값으로 설정
-                heart=False,
-                carb=food_info.carb,
-                protein=food_info.protein,
-                fat=food_info.fat,
-                calorie=food_info.calorie,
-                unit="gram",
-                size=food_info.size,
-                track_goal=None,
-                label=food_label
-            )
-            db.add(mealhour)
-            db.commit()
-            return
-
-    def delete_mealhour(self, user_id: str, record_date: date, mealtime: MealTime):
-        with SessionLocal() as db:
-            mealday = db.query(MealDay).filter(MealDay.user_id == user_id, MealDay.record_date==record_date).first()
             if mealday is None:
                 return None
-            mealhour = db.query(MealHour).filter(MealHour.daymeal_id == mealday.id, MealHour.meal_time==mealtime).first()
-            if mealhour is None:
+            dish = db.query(Dish).filter(Dish.id == dish_id.id, Dish.user_id==user_id).first()
+            if dish is None:
                 return None
-            mealday.carb -= mealhour.carb
-            mealday.protein -= mealhour.protein
-            mealday.fat -= mealhour.fat
-            mealday.nowcalorie -= mealhour.calorie
-            picture_path=mealhour.picture
-            db.delete(mealhour)
+            mealday.carb -= dish.carb
+            mealday.protein -= dish.protein
+            mealday.fat -= dish.fat
+            mealday.nowcalorie -= dish.calorie
+            mealday.update_datetime = datetime.utcnow()
+            picture_path=dish.picture
+            db.delete(dish)
             db.commit()
             return picture_path
 
-    def update_mealhour(self, _mealhour: MealHour, percent: float):
+    def update_dish(self, _dish: Dish, percent: float):
         with SessionLocal() as db:
-            mealhour = db.query(MealHour).filter(MealHour.id == _mealhour.id).first()
+            dish = db.query(Dish).filter(Dish.id == _dish.id).first()
             if percent > 0:
-                mealday = db.query(MealDay).filter(MealDay.id == mealhour.daymeal_id).first()
-                mealday.carb -= (-_mealhour.carb + mealhour.carb)
-                mealday.protein -= (-_mealhour.protein + mealhour.protein)
-                mealday.fat -= (-_mealhour.fat + mealhour.fat)
-                mealday.nowcalorie -= (-_mealhour.calorie + mealhour.calorie)
-            mealhour.heart = _mealhour.heart
-            mealhour.track_goal = _mealhour.track_goal
-            mealhour.size = _mealhour.size
-            mealhour.carb = _mealhour.carb
-            mealhour.protein = _mealhour.protein
-            mealhour.fat = _mealhour.fat
-            mealhour.calorie = _mealhour.calorie
+                mealday = db.query(MealDay).filter(MealDay.id == dish.daymeal_id).first()
+                mealday.carb -= (-_dish.carb + dish.carb)
+                mealday.protein -= (-_dish.protein + dish.protein)
+                mealday.fat -= (-_dish.fat + dish.fat)
+                mealday.nowcalorie -= (-_dish.calorie + dish.calorie)
+                mealday.update_datetime = datetime.utcnow()
+            dish.heart = _dish.heart
+            dish.track_goal = _dish.track_goal
+            dish.update_dateime = datetime.utcnow()
+            dish.size = _dish.size
+            dish.carb = _dish.carb
+            dish.protein = _dish.protein
+            dish.fat = _dish.fat
+            dish.calorie = _dish.calorie
             db.commit()
-            return mealhour
+            return dish
+
+    def find_food_by_name(self, name: str):
+        with SessionLocal() as db:
+            return db.query(Food).filter(Food.name == name).first()
 
     def find_food(self, label: int):
         with SessionLocal() as db:

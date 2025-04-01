@@ -16,8 +16,8 @@ from modules.user.domain.repository.user_repo import IUserRepository
 from modules.mealday.domain.repository.mealday_repo import IMealDayRepository
 from modules.mealday.domain.mealday import MealDay as MealDayV0
 from modules.track.interface.schema.track_schema import MealTime
-from modules.mealday.interface.schema.mealday_schema import CreateMealDayBody, MealHourResponse_Full_Picture, MealDayResponse_Full, \
-    UpdateMealDayBody, MealDayResponse_RecordCount, UpdateMealHourBody
+from modules.mealday.interface.schema.mealday_schema import CreateMealDayBody, MealDayResponse_Full, \
+    UpdateMealDayBody, UpdateDishBody
 from utils.crypto import Crypto
 from utils.db_utils import orm_to_pydantic, dataclass_to_pydantic
 from utils.exceptions.error_code import ErrorCode
@@ -47,6 +47,7 @@ class MealDayService:
             id=str(ULID()),
             user_id=user_id,
             record_date=daytime,
+            update_datetime=datetime.utcnow(),
             water=0.0,
             coffee=0.0,
             alcohol=0.0,
@@ -95,55 +96,22 @@ class MealDayService:
         count = self.mealday_repo.save_many_mealday(user_id, first_day = first_day, last_day = last_day)
         return count
 
+    def create_mealday_by_track_id(self, user_id: str, track_id: str):
+        count = self.mealday_repo.save_many_mealday_by_track_id(user_id = user_id, track_id = track_id)
+        return count
+
     def find_mealday_by_date(self, user_id: str, record_date: date):
         mealday = self.mealday_repo.find_by_date(user_id=user_id, record_date=record_date)
         if mealday is None:
             raise raise_error(ErrorCode.MEALDAY_NOT_FOUND)
         return mealday
 
-    def find_mealday_todaycalorie_by_date(self, user_id: str, record_date: date):
+    def find_mealday_by_date(self, user_id: str, record_date: date):
         mealday = self.mealday_repo.find_by_date(user_id=user_id, record_date=record_date)
         if mealday is None:
             raise raise_error(ErrorCode.MEALDAY_NOT_FOUND)
-        todaycalorie = mealday.nowcalorie - mealday.burncalorie
-        goalcalorie = mealday.goalcalorie
-        nowcalorie = mealday.nowcalorie
-        burncalorie = mealday.burncalorie
-        weight = mealday.weight
-        return {"todaycalorie": todaycalorie, "goalcalorie": goalcalorie, "nowcalorie": nowcalorie,
-                "burncalorie": burncalorie, "weight": weight}
+        return mealday
 
-    def get_mealday_record_count_by_date(self, user_id: str, year: int, month: int):
-        try:
-            # 주어진 월의 첫날과 마지막 날을 구합니다.
-            first_day = datetime(year, month, 1).date()
-            last_day = datetime(year, month, monthrange(year, month)[1]).date()
-        except ValueError:
-            raise ErrorCode.INVALID_FORMAT
-        body: MealDayResponse_RecordCount = self.mealday_repo.find_record_count(user_id, first_day=first_day,last_day=last_day)
-
-        days = (last_day - first_day).days + 1
-
-        return {"record_count": body.record_count, "days": days}
-
-    def get_mealday_avg_calorie(self, user_id: str, year: int, month: int):
-        try:
-            # 주어진 월의 첫날과 마지막 날을 구합니다.
-            first_day = datetime(year, month, 1).date()
-            last_day = datetime(year, month, monthrange(year, month)[1]).date()
-        except ValueError:
-            raise ErrorCode.INVALID_FORMAT
-
-        body: MealDayResponse_RecordCount = self.mealday_repo.find_record_count(user_id,first_day=first_day,last_day=last_day)
-        if body.record_count > 0:
-            avg_calorie = body.calorie / body.record_count
-        else:
-            avg_calorie = 0
-        return {"calorie": avg_calorie}
-
-    def get_meal_list(self, user_id: str, year: int, month: int):
-        meals = self.mealday_repo.find_by_year_month(user_id = user_id, year = year, month =month)
-        return meals
 
     def apply_update_mealday(self, mealday, body: UpdateMealDayBody):
         """사용자 정보 업데이트 적용"""
@@ -161,76 +129,15 @@ class MealDayService:
         return self.mealday_repo.update_mealday(mealday)
 
 ########################################################################
-##############MealHour##################################################
+##############DISH 및 MEAL##################################################
 ########################################################################
-
-    def get_mealhour_by_id(self, user_id: str, mealhour_id: str):
-        mealhour = self.mealday_repo.find_mealhour_by_id(user_id=user_id,mealhour_id=mealhour_id)
-        if mealhour is None:
-            raise raise_error(ErrorCode.MEALHOUR_NOT_FOUND)
-        return mealhour
-
-    def get_mealhour_by_date(self, user_id: str, daytime: str, mealtime: MealTime):
-        record_date = self.invert_daytime_to_date(daytime)
-        mealhour = self.mealday_repo.find_mealhour_by_date(user_id=user_id, record_date=record_date, mealtime=mealtime)
-        if mealhour is None:
-            raise raise_error(ErrorCode.MEALHOUR_NOT_FOUND)
-        return mealhour
-
-    def get_mealhour_picture(self, user_id: str, daytime: str, mealtime: MealTime):
-        record_date = self.invert_daytime_to_date(daytime)
-        mealhour = self.mealday_repo.find_mealhour_by_date(user_id=user_id, record_date=record_date, mealtime=mealtime)
-        if mealhour is None:
-            raise raise_error(ErrorCode.MEALHOUR_NOT_FOUND)
-        if not mealhour.picture:
-            raise ErrorCode.NO_PICTURE
-
-        # 서명된 URL 생성 (URL은 1시간 동안 유효)
-        blob = bucket.blob(mealhour.picture)
-        signed_url = blob.generate_signed_url(expiration=timedelta(hours=1))
-
-        return {"image_url": signed_url}
-
-    def get_mealhour_by_date_all(self, user_id: str, daytime: str):
-        record_date = self.invert_daytime_to_date(daytime)
-        mealhours = self.mealday_repo.find_mealhour_all(user_id=user_id, record_date = record_date)
-        if mealhours is None:
-            raise raise_error(ErrorCode.MEALHOUR_NOT_FOUND)
-        meals_with_url = []
-        for meal in mealhours:
-            image_url = None
-            if meal.picture:
-                blob = bucket.blob(meal.picture)
-                image_url = blob.generate_signed_url(expiration=timedelta(hours=1))  # 1시간 유효한 서명된 URL 생성
-            meal_response = MealHourResponse_Full_Picture(
-                id=meal.id,
-                user_id=meal.user_id,
-                daymeal_id=meal.daymeal_id,
-                meal_time=meal.meal_time,
-                name=meal.name,
-                picture=meal.picture,
-                text=meal.text,
-                record_datetime=meal.record_datetime,
-                heart=meal.heart,
-                carb=meal.carb,
-                protein=meal.protein,
-                fat=meal.fat,
-                calorie=meal.calorie,
-                unit=meal.unit,
-                size=meal.size,
-                track_goal=meal.track_goal,
-                label=meal.label,
-                image_url=image_url
-            )
-            meals_with_url.append(meal_response)
-        return meals_with_url
 
     def create_file_name(self, user_id: str):
         time = datetime.now().strftime('%Y-%m-%d-%H%M%S')
         filename = f"{user_id}_{time}"
         return filename
 
-    def upload_temp(self, user_id: str, file: File(...)):
+    def moose(self, user_id: str, file: File(...)):
         # 고유한 파일 이름 생성
         file_id = self.create_file_name(user_id=user_id)
 
@@ -253,119 +160,92 @@ class MealDayService:
             temp_blob.delete()  # firebase에 저장된 임시파일삭제
             raise ErrorCode.YOLO_FAILED
             return
-
-        # # Yolov 서버에서 반환된 정보  -->>>>>>>> label만 받는걸로 변경필요
+        # Yolov 서버에서 반환된 정보
         food_info = response.json()
         print(food_info)
-        #food_info = {"is_success": True, "label": 14011001}
         is_success = bool(food_info.get("is_success", False))
-        if is_success == False:
-            temp_blob.delete()
-            raise HTTPException(status_code=400, detail="No food data")
+        if is_success is False:
+            return ErrorCode.NO_FOOD
         return {"file_path": temp_blob.name, "food_info": food_info, "image_url": url}  ## 임시파일이름, food정보, url 반환
 
-    def remove_temp_meal(self, file_path: Form):
+    def remove_moose(self, file_path: Form):
         temp_blob = bucket.blob(file_path)
-
         if temp_blob.exists():
             temp_blob.delete()
             return {"detail": "Temporary file removed"}
         return {"detail": "No Temporary file here"}
 
-    def register_mealhour(self, user_id: str, daytime: str, mealtime: MealTime,
-                      hourminute: str, file_path: str, food_labels: str, text: str):
+    def get_all_dishes_by_track_id(self, user_id: str, track_id: str):
+        dishes = self.mealday_repo.get_all_dishes_by_track_id(user_id = user_id, track_id = track_id)
+        if dishes is None:
+            raise raise_error(ErrorCode.DISH_NOT_FOUND)
+        return dishes
 
-        try:
-            # JSON 문자열을 Python 리스트로 변환
-            food_labels_list = json.loads(food_labels)
-            # 리스트 요소를 `int`로 변환
-            food_labels_int = [int(label) for label in food_labels_list]
-        except (json.JSONDecodeError, ValueError, TypeError):
-            raise ErrorCode.INVALID_FORMAT  # JSON 변환 오류 발생 시 예외 처리
+    def register_dish(self, user_id: str, daytime: str, mealtime: MealTime,
+                      name: List[str], calorie: List[float], picture: List[File(...)]):
         record_date = self.invert_daytime_to_date(daytime)
-        # hourminute 값을 받아 시간과 분으로 변환
-        try:
-            hour = int(hourminute[:2])
-            minute = int(hourminute[2:])
-        except (ValueError, IndexError):
-            raise ErrorCode.INVALID_FORMAT
-        mealhour_check = self.mealday_repo.find_mealhour_by_date(user_id=user_id, record_date=record_date, mealtime=mealtime)
-        if mealhour_check:
-            raise ErrorCode.MEALHOUR_EXIST
+        meal = self.mealday_repo.find_meal_by_date(user_id=user_id,record_date=record_date)
+        if meal is None:
+            meal = self.mealday_repo.create_meal(user_id=user_id, record_date=record_date, mealtime=mealtime)
 
-        temp_blob = bucket.blob(file_path)
+        picture_pathes=[]
+        for i in range(len(name)):
+            # 파일이 있으면 firebase 업로드 처리, 없으면 None
+            if picture and i < len(picture) and picture[i] is not None:
+                file = picture[i]
+                file_id = self.create_file_name(user_id=user_id)
+                blob = bucket.blob(f"meal/{file_id}")
+                blob.upload_from_file(file.file, content_type=file.content_type)
+                picture_path = blob.name
+            else:
+                picture_path = None
+            picture_pathes.append(picture_path)
 
-        if not temp_blob.exists():
-            raise ErrorCode.NO_TEMP_PICTURE
+        self.mealday_repo.create_dishes(user_id=user_id, meal_id=meal.id,name=name, calorie=calorie, picture_path=picture_pathes, mealday_id =meal.mealday_id)
 
-        # 임시 파일을 meal 폴더로 이동
-        meal_blob = bucket.blob(f"meal/{os.path.basename(file_path)}")
-        bucket.rename_blob(temp_blob, meal_blob.name)
 
-        # 서명된 URL 생성
-        signed_url = meal_blob.generate_signed_url(expiration=timedelta(hours=1))  # 60분
-        print(signed_url)
-        # 오늘 날짜와 hourminute를 결합한 datetime 객체 생성
-        record_date_time = datetime.combine(record_date, time(hour, minute))
+    def find_dish(self, user_id: str, dish_id: str):
+        dish = self.mealday_repo.find_dish(self, user_id= user_id, dish_id= dish_id)
+        if dish is None:
+            raise raise_error(ErrorCode.DISH_NOT_FOUND)
+        return dish
 
-        for food_label in food_labels_int: #########-----> 현재 labels가 list[str]형태로 오고있어서 임시수정함 라벨온만큼 등록됨
-            if self.mealday_repo.find_food(label=food_label) is None:
-                meal_blob.delete()
-                raise ErrorCode.NO_FOOD
-            self.mealday_repo.create_mealhour(
-                user_id=user_id,
-                record_datetime=record_date_time,
-                mealtime=mealtime,
-                file_name=meal_blob.name,
-                food_label=food_label,
-                text=text
-            )
-
-        #self.mealday_repo.create_mealhour(user_id = user_id, record_datetime=record_date_time,
-        #                                  mealtime=mealtime, file_name=meal_blob.name, food_label=food_label, text=text)
-
-        ## 트랙 지킨 여부 아직 미완성
-        # mentor_info = self.user_repo.find_users_mentor_info_by_user_id(user_id=user_id)
-        # if mentor_info:
-        #     data = {
-        #         "user_id": user_id,
-        #         "mentor_id": mentor_info["mentor_user_id"],
-        #         "message": f"{mentor_info['username']}님이 {mealtime}을 등록했습니다."
-        #     }
-        #     send_fcm_data_noti(mentor_info["mentor_user_id"], "회원식사등록", data["message"], data)
-
-    def remove_meal(self, user_id: str, daytime: str, mealtime: MealTime):
-        record_date = self.invert_daytime_to_date(daytime)
-        picture_path = self.mealday_repo.delete_mealhour(user_id = user_id, record_date = record_date, mealtime = mealtime)
+    def remove_dish(self, user_id: str, dish_id: str):
+        picture_path = self.mealday_repo.delete_dish(user_id = user_id, dish_id = dish_id)
         if picture_path is None:
-            raise raise_error(ErrorCode.MEALHOUR_NOT_FOUND)
+            raise raise_error(ErrorCode.DISH_NOT_FOUND)
         else:
             blob = bucket.blob(picture_path)
             if blob.exists():
                 blob.delete()
 
-    def apply_update_mealhour(self, mealhour, body: UpdateMealHourBody):
+    def apply_update_dish(self, dish, body: UpdateDishBody):
         """사용자 정보 업데이트 적용"""
         if body.heart is not None:
-            mealhour.heart = body.heart
+            dish.heart = body.heart
         if body.track_goal is not None:
-            mealhour.track_goal = body.track_goal
+            dish.track_goal = body.track_goal
         if body.size and body.size > 0:
-            old_size = mealhour.size
+            old_size = dish.size
             new_size = body.size
             percent = new_size / old_size if old_size > 0 else 1
-            mealhour.size = new_size
-            mealhour.carb *= percent
-            mealhour.protein *= percent
-            mealhour.fat *= percent
-            mealhour.calorie *= percent
+            dish.size = new_size
+            dish.carb *= percent
+            dish.protein *= percent
+            dish.fat *= percent
+            dish.calorie *= percent
             return percent
         return 0
 
-    def update_mealhour(self, user_id: str, daytime: str, mealtime:MealTime, body: UpdateMealHourBody):
-        record_date = self.invert_daytime_to_date(daytime)
-        mealhour = self.mealday_repo.find_mealhour_by_date(user_id=user_id,record_date=record_date,mealtime=mealtime)
-        if mealhour is None:
+    def update_dish(self, user_id: str, dish_id: str, body: UpdateDishBody):
+        dish = self.mealday_repo.find_dish(user_id=user_id,dish_id=dish_id)
+        if dish is None:
             raise raise_error(ErrorCode.MEALHOUR_NOT_FOUND)
-        percent = self.apply_update_mealhour(mealhour, body) ## 1이면 size변경, 0이면 size변경 X
-        return self.mealday_repo.update_mealhour(mealhour, percent)
+        percent = self.apply_update_dish(dish, body) ## 1이면 size변경, 0이면 size변경 X
+        return self.mealday_repo.update_dish(dish, percent)
+
+    def get_food_data(self, name: str):
+        food= self.mealday_repo.find_food_by_name(name=name)
+        if food is None:
+            raise raise_error(ErrorCode.NO_FOOD)
+        return food
