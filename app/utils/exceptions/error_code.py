@@ -4,9 +4,13 @@ from fastapi import HTTPException, status
 
 class ErrorCode(Enum):
     # Track 관련 에러 코드
+    ROUTINE_DAYS_SO_OVER = (status.HTTP_400_BAD_REQUEST, "루틴 days가 트랙 duration보다 큽니다.")
     TRACK_ROUTINE_DATE_NOT_FOUND = (status.HTTP_404_NOT_FOUND, "루틴 Date가 존재하지 않습니다.")
     TRACK_ROUTINE_NOT_FOUND = (status.HTTP_404_NOT_FOUND, "루틴이 존재하지 않습니다.")
     TRACK_NOT_FOUND = (status.HTTP_404_NOT_FOUND, "트랙이 존재하지 않습니다.")
+
+    # Participant 관련 에러 코드
+    PARTICIPANT_ALREADY_EXIST = (status.HTTP_409_CONFLICT, "이미 트랙에 참여중입니다.")
 
     # 인증
     CODE_VERIFY_FAIL = (status.HTTP_400_BAD_REQUEST, "인증 코드가 올바르지 않습니다.")
@@ -29,6 +33,7 @@ class ErrorCode(Enum):
     # db 관련 에러 코드
     DATABASE_SAVE_FAIL = (status.HTTP_500_INTERNAL_SERVER_ERROR, "데이터베이스 저장에 실패했습니다.")
 
+    # 기타
     MEMBER_NOT_AUTHENTICATED = (status.HTTP_401_UNAUTHORIZED, "로그인하지 않은 사용자입니다")
     MEMBER_NOT_FOUND = (status.HTTP_404_NOT_FOUND, "사용자 정보가 존재하지 않습니다")
     DUPLICATE_MEMBER_LOGIN_ID = (status.HTTP_409_CONFLICT, "중복된 로그인 아이디입니다")

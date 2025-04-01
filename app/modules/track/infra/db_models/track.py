@@ -30,6 +30,7 @@ class Track(Base):  # 식단트랙
     share_count: Mapped[int] = mapped_column(Integer, default=0)
     alone: Mapped[bool] = mapped_column(Boolean, default=True)  # 개인트랙 여부
     daily_calorie: Mapped[float] = mapped_column(Float, default=0)
+    image_url: Mapped[str] = mapped_column(String, nullable=True, default=None)
 
     routines: Mapped[list["TrackRoutine"]] = relationship("TrackRoutine", back_populates="track", cascade="all, delete-orphan")
 
@@ -42,19 +43,23 @@ class TrackRoutine(Base):  # 식단트랙 루틴
     title: Mapped[str] = mapped_column(String(length=255), nullable=False, default="새로운 루틴")
     calorie: Mapped[float] = mapped_column(Float, nullable=False, default=0)  # 목표 칼로리
     delete: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)  # 삭제 여부
+    # weekday: Mapped[int] = mapped_column(Integer, nullable=False)  # 0 ~ 6
+    mealtime: Mapped[MealTime] = mapped_column(Enum(MealTime), nullable=False)
+    days: Mapped[int] = mapped_column(Integer, nullable=False) # 몇일 차 인지
+    clock: Mapped[datetime.time] = mapped_column(Time, nullable=False, default=lambda: datetime.time(0, 0, 0))
+    image_url: Mapped[str] = mapped_column(String, nullable=True, default=None)
 
     track: Mapped["Track"] = relationship("Track", back_populates="routines")
-    routine_dates: Mapped[list["TrackRoutineDate"]] = relationship("TrackRoutineDate", back_populates="routine", cascade="all, delete-orphan")
 
 
-class TrackRoutineDate(Base):
-    __tablename__ = "TrackRoutineDate"
-
-    id: Mapped[str] = mapped_column(String, primary_key=True)
-    routine_id: Mapped[str] = mapped_column(String, ForeignKey("TrackRoutine.id"), nullable=False)
-    weekday: Mapped[int] = mapped_column(Integer, nullable=False)  # 0 ~ 6
-    meal_time: Mapped[MealTime] = mapped_column(Enum(MealTime))
-    date: Mapped[int] = mapped_column(Integer, nullable=False) # 몇일 차 인지
-    clock: Mapped[datetime.time] = mapped_column(Time, nullable=False, default=lambda: datetime.time(0, 0, 0))
-
-    routine: Mapped["TrackRoutine"] = relationship("TrackRoutine", back_populates="routine_dates")
+# class TrackRoutineDate(Base):
+#     __tablename__ = "TrackRoutineDate"
+#
+#     id: Mapped[str] = mapped_column(String, primary_key=True)
+#     routine_id: Mapped[str] = mapped_column(String, ForeignKey("TrackRoutine.id"), nullable=False)
+#     weekday: Mapped[int] = mapped_column(Integer, nullable=False)  # 0 ~ 6
+#     meal_time: Mapped[MealTime] = mapped_column(Enum(MealTime))
+#     date: Mapped[int] = mapped_column(Integer, nullable=False) # 몇일 차 인지
+#     clock: Mapped[datetime.time] = mapped_column(Time, nullable=False, default=lambda: datetime.time(0, 0, 0))
+#
+#     routine: Mapped["TrackRoutine"] = relationship("TrackRoutine", back_populates="routine_dates")

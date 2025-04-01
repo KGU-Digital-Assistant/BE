@@ -1,7 +1,9 @@
 from abc import ABCMeta, abstractmethod
+from datetime import datetime
 from typing import List
 
-from modules.track.domain.track import Track, TrackRoutine, TrackRoutineDate
+from modules.track.domain.track_participant import TrackParticipant as TrackParticipantVO
+from modules.track.domain.track import Track, TrackRoutine
 from modules.track.interface.schema.track_schema import UpdateTrackBody
 
 
@@ -15,15 +17,11 @@ class ITrackRepository(metaclass=ABCMeta):
         raise NotImplementedError
 
     @abstractmethod
-    def routine_save(self, routine: TrackRoutine, track: Track):
+    def routines_save(self, routine: List[TrackRoutine], track: Track):
         raise NotImplementedError
 
     @abstractmethod
     def find_routine_by_id(self, routine_id: str):
-        raise NotImplementedError
-
-    @abstractmethod
-    def find_routine_dates_by_routine_id(self, routine_id: str):
         raise NotImplementedError
 
     @abstractmethod
@@ -34,13 +32,13 @@ class ITrackRepository(metaclass=ABCMeta):
     def update_routine(self, routine: TrackRoutine):
         raise NotImplementedError
 
-    @abstractmethod
-    def find_routine_date_by_id(self, routine_date_id: str):
-        raise NotImplementedError
+    # @abstractmethod
+    # def find_routine_date_by_id(self, routine_date_id: str):
+    #     raise NotImplementedError
 
-    @abstractmethod
-    def update_routine_date(self, routine_date: TrackRoutineDate):
-        raise NotImplementedError
+    # @abstractmethod
+    # def update_routine_date(self, routine_date: TrackRoutineDate):
+    #     raise NotImplementedError
 
     @abstractmethod
     def delete_track(self, track_id: str, user_id: str):
@@ -51,5 +49,17 @@ class ITrackRepository(metaclass=ABCMeta):
         raise NotImplementedError
 
     @abstractmethod
-    def delete_routine_date(self, routine_date_id: str, user_id: str):
+    def find_tracks_by_id(self, user_id: str):
+        raise NotImplementedError
+
+    @abstractmethod
+    def start_track(self, track_participant: TrackParticipantVO):
+        raise NotImplementedError
+
+    @abstractmethod
+    def update_start_date(self, track_id: str, user_id: str, start_date: datetime.date):
+        raise NotImplementedError
+
+    @abstractmethod
+    def routine_save(self, routine: TrackRoutine, track: Track):
         raise NotImplementedError
