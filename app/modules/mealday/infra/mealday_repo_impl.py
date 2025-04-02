@@ -15,6 +15,7 @@ from modules.track.interface.schema.track_schema import MealTime
 from modules.track.infra.db_models.track_participant import TrackParticipant
 from modules.track.infra.db_models.track import Track
 from utils.db_utils import row_to_dict
+from core.fcm import bucket
 from utils.exceptions.error_code import ErrorCode
 from utils.exceptions.handlers import raise_error
 
@@ -184,7 +185,20 @@ class MealDayRepository(IMealDayRepository, ABC):
                 if mealday:
                     for meal in mealday.meals:
                         if meal and meal.dishes:
-                            dishes_full = [Dish_Full.from_orm(dish) for dish in meal.dishes]
+                            dishes_full = []
+                            for dish in meal.dishes:
+                                picture_url = None
+                                if dish.picture and dish.picture != "default":
+                                    try:
+                                        # 서명된 URL 생성 (URL은 1시간 동안 유효)
+                                        blob = bucket.blob(dish.picture)
+                                        picture_url = blob.generate_signed_url(expiration=timedelta(hours=1))
+                                    except Exception:
+                                        raise raise_error(ErrorCode.DISH_NOT_FOUND)
+                                dish_data = Dish_Full.from_orm(dish)
+                                dish_data.picture = picture_url
+                                dishes_full.append(dish_data)
+
                             dishes.append(Dish_with_datetime(
                                 record_date=mealday.record_date,
                                 mealtime=meal.mealtime,

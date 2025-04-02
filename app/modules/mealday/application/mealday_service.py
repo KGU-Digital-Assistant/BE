@@ -208,6 +208,14 @@ class MealDayService:
         dish = self.mealday_repo.find_dish(user_id= user_id, dish_id= dish_id)
         if dish is None:
             raise raise_error(ErrorCode.DISH_NOT_FOUND)
+        if dish.picture and dish.picture != "default":
+            try:
+                # 서명된 URL 생성 (URL은 1시간 동안 유효)
+                blob = bucket.blob(dish.picture)
+                signed_url = blob.generate_signed_url(expiration=timedelta(hours=1))
+            except Exception:
+                raise raise_error(ErrorCode.DISH_NOT_FOUND)
+            dish.picture = signed_url
         return dish
 
     def remove_dish(self, user_id: str, dish_id: str):
