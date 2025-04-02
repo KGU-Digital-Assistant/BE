@@ -1,15 +1,14 @@
 from datetime import datetime, date
-from enum import Enum
-from typing import Optional
+from typing import Optional, List
 
-from pydantic import BaseModel, EmailStr, field_validator, Field
-from pydantic_core.core_schema import FieldValidationInfo
-
+from pydantic import BaseModel, Field
+from modules.track.interface.schema.track_schema import MealTime
 
 class CreateMealDayBody(BaseModel):
     id: Optional[str] = Field(default=None, description="ID, 입력 불필요")  #자동 증가용
     user_id: str = Field(min_length=1, max_length=50, description="User id")
     record_date: date = Field(description="기록 날짜")
+    update_datetime: datetime = Field(default=datetime.utcnow(), description="기록시간")
     water: Optional[float] = Field(default=0.0, ge=0, description="섭취한 물(잔)")
     coffee: Optional[float] = Field(default=0.0, ge=0, description="섭취한 커피(잔)")
     alcohol: Optional[float] = Field(default=0.0, ge=0, description="섭취한 알코올(잔)")
@@ -35,6 +34,7 @@ class MealDayResponse_Full(BaseModel):
     id: str
     user_id: str
     record_date: date
+    update_datetime: datetime
     water: float | None
     coffee: float | None
     alcohol: float | None
@@ -52,37 +52,6 @@ class MealDayResponse_Full(BaseModel):
     routine_success_rate: float | None
     track_id: str | None
 
-class MealDayResponse_Nutrient(BaseModel):
-    carb: float | None
-    protein: float | None
-    fat: float | None
-    gb_carb: float | None
-    gb_protein: float | None
-    gb_fat: float | None
-
-class MealDayResponse_Cheating(BaseModel):
-    cheating: int | None
-
-class MealDayResponse_WCA(BaseModel):
-    water:float | None
-    coffee: float | None
-    alcohol: float | None
-
-class MealDayResponse_Calorie(BaseModel): ## 목표, 현재 칼로리
-    goalcalorie: float | None
-    nowcalorie: float | None
-
-class MealDayResponse_TodayCalorie(BaseModel):
-    todaycalorie: float  | None
-    goalcalorie: float  | None
-    nowcalorie: float  | None
-    burncalorie: float  | None
-    weight : float | None
-
-class MealDayResponse_RecordCount(BaseModel):
-    record_count: Optional[int] = None
-    days: Optional[int] = None
-    calorie: Optional[float] = None
 
 class UpdateMealDayBody(BaseModel):
     weight: Optional[float] = None
@@ -90,3 +59,58 @@ class UpdateMealDayBody(BaseModel):
     water: Optional[float] = None
     coffee: Optional[float] = None
     alcohol: Optional[float] = None
+
+########################################################################
+############## Dish & Meal ##################################################
+########################################################################
+
+
+class UpdateDishBody(BaseModel):
+    heart: Optional[bool] = None
+    track_goal: Optional[bool] = None
+    size: Optional[float] = None
+
+class Food_Data(BaseModel):
+    label: Optional[int] = 0
+    name: Optional[str] = "음식명"
+    size: Optional[float] = 0.0
+    calorie: Optional[float] = 0.0
+    carb: Optional[float] = 0.0
+    sugar: Optional[float] = 0.0
+    fat: Optional[float] = 0.0
+    protein: Optional[float] = 0.0
+    calcium: Optional[float] = 0.0
+    phosphorus: Optional[float] = 0.0
+    sodium: Optional[float] = 0.0
+    magnesium: Optional[float] = 0.0
+    iron: Optional[float] = 0.0
+    zinc: Optional[float] = 0.0
+    cholesterol: Optional[float] = 0.0
+    trans_fat: Optional[float] = 0.0
+
+class Dish_Full(BaseModel):
+    id: str
+    user_id: str
+    meal_id: str
+    name: Optional[str] = None
+    picture: Optional[str] = None
+    text: Optional[str] = None
+    record_datetime: datetime
+    update_datetime: datetime
+    heart: Optional[bool] = None
+    carb: Optional[float] = None
+    protein: Optional[float] = None
+    fat: Optional[float] = None
+    calorie: Optional[float] = None
+    unit: Optional[str] = None
+    size: Optional[float] = None
+    track_goal: Optional[bool] = None
+    label: Optional[int] = None
+    trackpart_id: Optional[str] = None
+    class Config:
+        from_attributes = True
+
+class Dish_with_datetime(BaseModel):
+    record_date: date
+    mealtime: MealTime
+    dish_list: List[Dish_Full]

@@ -27,8 +27,17 @@ class ErrorCode(Enum):
     USER_ALREADY_EXIST_NICKNAME = (status.HTTP_409_CONFLICT, " 중복된 닉네임 입니다.")
     USER_ALREADY_EXIST_USERNAME = (status.HTTP_409_CONFLICT, "중복된 username입니다.")
 
+    # 형식불일치 관련 에러 코드
+    INVALID_FORMAT = (status.HTTP_406_NOT_ACCEPTABLE, "Parameter 형식이 유효하지 않습니다.")
+
     # MealDay 관련 에러 코드
     MEALDAY_NOT_FOUND = (status.HTTP_404_NOT_FOUND, "식단(일일)가 존재하지 않습니다.")
+
+    # DISH 관련 에러 코드
+    DISH_NOT_FOUND = (status.HTTP_404_NOT_FOUND, "DISH가 존재하지 않습니다.")
+    NO_PICTURE = (status.HTTP_404_NOT_FOUND, "DISH의 사진이 존재하지 않습니다.")
+    YOLO_FAILED = (status.HTTP_502_BAD_GATEWAY, "YOLO_SERVER연결에 실패했습니다.")
+    NO_FOOD = (status.HTTP_404_NOT_FOUND, "음식데이터가 존재하지 않습니다.")
 
     # db 관련 에러 코드
     DATABASE_SAVE_FAIL = (status.HTTP_500_INTERNAL_SERVER_ERROR, "데이터베이스 저장에 실패했습니다.")

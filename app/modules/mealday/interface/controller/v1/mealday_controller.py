@@ -1,26 +1,21 @@
 from typing import Annotated
 from datetime import date
-from fastapi import APIRouter, Depends, Query, Path
-
-from typing import List
+from fastapi import APIRouter, Depends, Query, Path, UploadFile, File, Form
+from typing import List, Optional
 from dependency_injector.wiring import inject, Provide
-from fastapi.security import OAuth2PasswordRequestForm
-from sqlalchemy.orm import Session
 from starlette import status
 from containers import Container
 from core.auth import CurrentUser, get_current_user
-from database import get_db
 from modules.mealday.application.mealday_service import MealDayService
-from modules.mealday.domain.mealday import MealDay
-from modules.mealday.interface.schema.mealday_schema import CreateMealDayBody,MealDayResponse_Date, MealDayResponse_Full,\
-    MealDayResponse_Nutrient, MealDayResponse_Cheating, MealDayResponse_WCA, MealDayResponse_Calorie, MealDayResponse_TodayCalorie,\
-    MealDayResponse_RecordCount, UpdateMealDayBody
+from modules.mealday.interface.schema.mealday_schema import MealDayResponse_Date, MealDayResponse_Full,\
+    Dish_Full,UpdateDishBody, Food_Data, Dish_with_datetime
 from utils.responses.response import APIResponse
 
-router = APIRouter(prefix="/api/v1/meal_day", tags=["mealday"])
+
+mealday_router = APIRouter(prefix="/api/v1/meal_day", tags=["mealday"])
 
 
-@router.post("/post/meal_day/{daytime}", response_model=MealDayResponse_Date)
+@mealday_router.post("/post_date/{daytime}", response_model=MealDayResponse_Date)
 @inject
 def create_mealday_by_date(
         daytime: Annotated[str, Path(description="생성날짜 (형식: YYYY-MM-DD)")],
@@ -32,7 +27,7 @@ def create_mealday_by_date(
     """
     return mealday_service.create_mealday_by_date(current_user.id,daytime)
 
-@router.post("/post/meal_day/{year}/{month}", response_model=APIResponse)
+@mealday_router.post("/post_year_month/{year}/{month}", response_model=APIResponse)
 @inject
 def create_mealday_by_month(
         year: Annotated[int, Path(description="생성년도 (형식: 2024)")],
@@ -46,20 +41,21 @@ def create_mealday_by_month(
     created_count = mealday_service.create_mealday_by_month(current_user.id,year,month)
     return APIResponse(status_code=status.HTTP_200_OK, message=f"{created_count}meal days created")
 
-@router.get("/get/mealday/{user_id}/{daytime}", response_model=MealDayResponse_Full)
+@mealday_router.post("/post_track_id/{track_id}", response_model=APIResponse)
 @inject
-def get_mealday_by_date(
-    user_id: Annotated[str, Path(description="유저id")],
-    daytime: Annotated[str, Path(description="생성날짜 (형식: YYYY-MM-DD)")],
-    mealday_service: MealDayService = Depends(Provide[Container.mealday_service])
-):
+def create_mealday_by_track_id(
+        track_id: Annotated[str, Path(description="트랙 id (형식: dasfdsafads)")],
+        current_user: Annotated[CurrentUser, Depends(get_current_user)],
+        mealday_service: MealDayService = Depends(Provide[Container.mealday_service])):
     """
-    식단일일(MealDay) 전체 조회
-     - 입력예시 : user_id = afdsttwssfa, daytime = 2024-06-01
+    특정 트랙 사용기간 동안의 MealDay db생성 : 앱실행시(해당월 입력) 해당기간에 생성
+     - 트랙 시작하기누를때 이거 먼저 만들어야함
+    - 입력예시 : track_id =f dasfdsf
     """
-    return mealday_service.find_mealday_by_date(user_id,daytime)
+    created_count = mealday_service.create_mealday_by_track_id(current_user.id, track_id)
+    return APIResponse(status_code=status.HTTP_200_OK, message=f"{created_count}meal days created")
 
-@router.get("/get_mealday", response_model=MealDayResponse_Full)
+@mealday_router.get("/get", response_model=MealDayResponse_Full)
 @inject
 def get_mealday_by_date(
     current_user: Annotated[CurrentUser, Depends(get_current_user)],
@@ -69,182 +65,118 @@ def get_mealday_by_date(
     """
     식단일일(MealDay) 전체 조회
      - 입력예시 : daytime = 2024-06-01
+     - 기능명세서 v1-7-1
     """
     return mealday_service.find_mealday_by_date(current_user.id, record_date)
 
-
-@router.get("/get/goal_now_nutrient/{daytime}", response_model=MealDayResponse_Nutrient)
+@mealday_router.post("/moose")
 @inject
-def get_mealday_nutrient_by_date(
+async def moose(
     current_user: Annotated[CurrentUser, Depends(get_current_user)],
-    daytime: Annotated[str, Path(description="생성날짜 (형식: YYYY-MM-DD)")],
+    file: Annotated[UploadFile, File((...),description="사진파일")],
     mealday_service: MealDayService = Depends(Provide[Container.mealday_service])
 ):
     """
-    금일 탄단지, 목표 탄단지 출력
-     - 입력예시 : daytime = 2024-06-01
-     - 출력 : carb,protein,fat, gb_carb, gb_protein, gb_carb
+    식단시간별(MealHour) 사진 입력시 firebase에 임시저장 및 yolo서버로부터 food정보 Get : 10page 2번
+     - 입력예시 : 사진파일
+     - 출력 : file_path, food_info, image_url
     """
-    return mealday_service.find_mealday_by_date(current_user.id, daytime)
+    return mealday_service.moose(current_user.id, file)
 
-@router.get("/get/cheating/{daytime}", response_model=MealDayResponse_Cheating)
+@mealday_router.post("/remove_moose") ##식단게시 취소시 임시파일삭제(임시저장사진명 필요:file_path)
 @inject
-def get_mealday_cheating_by_date(
-    current_user: Annotated[CurrentUser, Depends(get_current_user)],
-    daytime: Annotated[str, Path(description="생성날짜 (형식: YYYY-MM-DD)")],
+async def remove_moose(
+    file_path: Annotated[str, Form(..., description="moose로 얻은 file_path")],
     mealday_service: MealDayService = Depends(Provide[Container.mealday_service])
 ):
     """
-    금일 Cheating 여부 출력
-     - 입력예시 : daytime = 2024-06-01
-     - 출력 : cheating(1 or 0)
+    식단시간별(MealHour) 식단등록시 뒤로가기를 통한 임시저장된 음식사진삭제 : 10page 4-2번(뒤로가기)
+     - 입력예시 : file_path (moose api로 얻은 임시 파일경로)
     """
-    return mealday_service.find_mealday_by_date(current_user.id, daytime)
+    return mealday_service.remove_moose(file_path)
 
-@router.get("/get/wca/mine/{daytime}", response_model=MealDayResponse_WCA)
+dish_router = APIRouter(prefix="/api/v1/dish", tags=["dish"])
+
+@dish_router.get("/get_all_dishes/{track_id}", response_model=List[Dish_with_datetime])
 @inject
-def get_mealday_wca_by_date(
-    current_user: Annotated[CurrentUser, Depends(get_current_user)],
-    daytime: Annotated[str, Path(description="생성날짜 (형식: YYYY-MM-DD)")],
-    mealday_service: MealDayService = Depends(Provide[Container.mealday_service])
-):
-    """
-    식단일일(MealDay) wca 조회
-     - 입력예시 : daytime = 2024-06-01
-     - 출력 : MealDay.water, MealDay.coffee, MealDay.alcohol
-    """
-    return mealday_service.find_mealday_by_date(current_user.id, daytime)
-
-@router.get("/get/wca/formentor/{user_id}/{daytime}", response_model=MealDayResponse_WCA)
-@inject
-def get_mealday_wca_by_date(
-    user_id: Annotated[str, Path(description="유저id")],
-    daytime: Annotated[str, Path(description="생성날짜 (형식: YYYY-MM-DD)")],
-    mealday_service: MealDayService = Depends(Provide[Container.mealday_service])
-):
-    """
-    식단일일(MealDay) wca 조회
-     - 입력예시 : user_id = sa31dafe1, daytime = 2024-06-01
-     - 출력 : MealDay.water, MealDay.coffee, MealDay.alcohol
-    """
-    return mealday_service.find_mealday_by_date(user_id, daytime)
-
-@router.get("/get/calorie/{daytime}", response_model=MealDayResponse_Calorie)
-@inject
-def get_mealday_calorie_by_date(
-    current_user: Annotated[CurrentUser, Depends(get_current_user)],
-    daytime: Annotated[str, Path(description="생성날짜 (형식: YYYY-MM-DD)")],
-    mealday_service: MealDayService = Depends(Provide[Container.mealday_service])
-):
-    """
-    식단일일(MealDay) goal, now calorie
-     - 입력예시 : daytime = 2024-06-01
-     - 출력 : MealDay.goalcaloire, MealDay.nowcaloire
-    """
-    return mealday_service.find_mealday_by_date(current_user.id, daytime)
-
-@router.get("/get/calorie_today/{daytime}", response_model=MealDayResponse_TodayCalorie)
-@inject
-def get_mealday_todaycalorie_by_date(
-    current_user: Annotated[CurrentUser, Depends(get_current_user)],
-    daytime: Annotated[str, Path(description="생성날짜 (형식: YYYY-MM-DD)")],
-    mealday_service: MealDayService = Depends(Provide[Container.mealday_service])
-):
-    """
-    금일 칼로리, 목표칼로리 조회, 섭취칼로리, 소모칼로리, 몸무게 조회
-     - 입력예시 : 2024-06-01
-     - 출력 : todaycalorie(nowcalorie - burncalorie), MealDay.goalcaloire,
-             MealDay.nowcalorie, MealDay.burncalorie. MealDay.weight
-
-    """
-    return mealday_service.find_mealday_todaycalorie_by_date(current_user.id, daytime)
-
-@router.get("/get/meal_recording_count/{year}/{month}", response_model=MealDayResponse_RecordCount)
-@inject
-def get_meal_record_count(
-        year: Annotated[int, Path(description="생성년도 (형식: 2024)")],
-        month: Annotated[int, Path(description="생성월 (형식: 06)")],
+def get_all_dishes_by_track_id(
+        track_id: Annotated[str, Path(description="트랙 id (형식: dasfdsafads)")],
         current_user: Annotated[CurrentUser, Depends(get_current_user)],
         mealday_service: MealDayService = Depends(Provide[Container.mealday_service])):
-    """
-        특정 월 동안의 식단게시수 조회
-        - 입력예시 : year = 2024, month = 6
-        - 출력 : 식단기록일 / 해당월의 총 일수
-    """
-    return mealday_service.get_mealday_record_count_by_date(current_user.id,year,month)
+    return mealday_service.get_all_dishes_by_track_id(current_user.id, track_id)
 
-@router.get("/get/meal_avg_calorie/{year}/{month}", response_model=MealDayResponse_RecordCount)
-@inject
-def get_meal_avg_calorie(
-        year: Annotated[int, Path(description="생성년도 (형식: 2024)")],
-        month: Annotated[int, Path(description="생성월 (형식: 06)")],
-        current_user: Annotated[CurrentUser, Depends(get_current_user)],
-        mealday_service: MealDayService = Depends(Provide[Container.mealday_service])):
-    """
-        특정 월 동안의 일 평균 칼로리 조회
-        - 입력예시 : year = 2024, month = 6
-        - 출력 : 식단기록일 / 해당월의 총 일수
-    """
-    return mealday_service.get_mealday_avg_calorie(current_user.id,year,month)
 
-@router.get("/get/calender/{user_id}", response_model=List[MealDayResponse_Full])
-@inject
-def get_calendar(
-        user_id: Annotated[str, Path(description="유저id")],
-        year: Annotated[int, Query(description="생성년도 (형식: 2024)")],
-        month: Annotated[int, Query(description="생성월 (형식: 06)")],
-        mealday_service: MealDayService = Depends(Provide[Container.mealday_service])):
-    """
-    user_id와 month 정보를 넘기면 해당 월에 식단 정보 날짜 순으로 반환
-    """
-    return mealday_service.get_meal_list(user_id,year,month)
 
-@router.patch("/update/weight/{daytime}/{weight}", response_model=APIResponse)
+@dish_router.post("/dish/register/{daytime}/{mealtime}", response_model=APIResponse)
 @inject
-def update_weight(
-    current_user: Annotated[CurrentUser, Depends(get_current_user)],
-    daytime: Annotated[str, Path(description="생성날짜 (형식: YYYY-MM-DD)")],
-    weight: Annotated[float, Path(description="몸무게 (형식: 15.7)")],
+async def register_dish(
+    daytime: str = Path(..., description="형식: YYYY-MM-DD"),
+    mealtime: str = Path(..., description="시간대 (형식: LUNCH)"),
+    name: List[str] = Form(..., description="음식 이름 리스트"),
+    calorie: List[float] = Form(..., description="칼로리 리스트"),
+    picture: List[UploadFile] = File(default=[], description="0개 혹은 갯수맞춰서"),
+    current_user: CurrentUser = Depends(get_current_user),
     mealday_service: MealDayService = Depends(Provide[Container.mealday_service])
 ):
     """
-    식단일일(MealDay) 몸무게 업뎃 :
-     - 입력예시 : daytime = 2024-06-01,weight = 15.2
+    식단시간별(MealHour) 등록 (/dish/upload_temp api로 얻은 data 활용
+     - 입력예시 : daytime = 2024-06-01, mealtime = LUNCH, name = ["치킨", "피자"], calorie =[100, 200], picture=[사진파일 2개]
     """
-    body: UpdateMealDayBody = UpdateMealDayBody(
-        weight=weight,
-    )
-    mealday_service.update_mealday(current_user.id, daytime, body)
-    return APIResponse(status_code=status.HTTP_200_OK, message="Weight updated")
-@router.patch("/update/burncaloire/{daytime}/{burncalorie}", response_model=APIResponse)
-@inject
-def update_burncalorie(
-    current_user: Annotated[CurrentUser, Depends(get_current_user)],
-    daytime: Annotated[str, Path(description="생성날짜 (형식: YYYY-MM-DD)")],
-    burncalorie: Annotated[float, Path(description="소모칼로리 (형식: 15.7)")],
-    mealday_service: MealDayService = Depends(Provide[Container.mealday_service])
-):
-    """
-    식단일일(MealDay) 소모칼로리 업뎃 :
-     - 입력예시 : daytime = 2024-06-01, burncalorie = 15.2
-    """
-    body: UpdateMealDayBody = UpdateMealDayBody(
-        burncalorie=burncalorie,
-    )
-    mealday_service.update_mealday(current_user.id, daytime, body)
-    return APIResponse(status_code=status.HTTP_200_OK, message="Burncalorie updated")
+    mealday_service.register_dish(current_user.id, daytime, mealtime, name, calorie, picture)
+    return APIResponse(status_code=status.HTTP_200_OK, message="Dish Post Success")
 
-@router.patch("/update/wca/{daytime}", response_model=APIResponse)
+@dish_router.get("/dish/get/{dish_id}", response_model=Dish_Full)
 @inject
-def update_burncalorie(
+async def get_dish(
     current_user: Annotated[CurrentUser, Depends(get_current_user)],
-    daytime: Annotated[str, Path(description="생성날짜 (형식: YYYY-MM-DD)")],
-    body: UpdateMealDayBody,
+    dish_id: Annotated[str, Path(description=" (형식: dasfsdrewarq)")],
     mealday_service: MealDayService = Depends(Provide[Container.mealday_service])
 ):
     """
-    식단일일(MealDay) wca 업뎃 :
-     - 입력예시 : daytime = 2024-06-01, Json{water=1, coffee=2, alcohol = 5}
+    식단시간별(MealHour) 삭제
+     - 입력예시 : daytime = 2024-06-01, mealtime = LUNCH
     """
-    mealday_service.update_mealday(current_user.id, daytime, body)
-    return APIResponse(status_code=status.HTTP_200_OK, message="WCA updated")
+    return mealday_service.find_dish(current_user.id, dish_id)
+
+@dish_router.post("/dish/remove/{dish_id}", response_model=APIResponse) ## 등록한 Dish 삭제
+@inject
+async def remove_dish(
+    current_user: Annotated[CurrentUser, Depends(get_current_user)],
+    dish_id: Annotated[str, Path(description=" (형식: dasfsdrewarq)")],
+    mealday_service: MealDayService = Depends(Provide[Container.mealday_service])
+):
+    """
+    식단시간별(MealHour) 삭제
+     - 입력예시 : daytime = 2024-06-01, mealtime = LUNCH
+    """
+    mealday_service.remove_dish(current_user.id, dish_id)
+    return APIResponse(status_code=status.HTTP_200_OK, message="Dish Delete Success")
+
+
+@dish_router.patch("/dish/update/{dish_id}", response_model=APIResponse)
+@inject
+def update_dish(
+    current_user: Annotated[CurrentUser, Depends(get_current_user)],
+    dish_id: Annotated[str, Path(description=" (형식: dasfsdrewarq)")],
+    body: UpdateDishBody,
+    mealday_service: MealDayService = Depends(Provide[Container.mealday_service])
+):
+    """
+    식단시간 size 변경-> 먹은 음식 gram 수 변경
+     - 입력예시 : dish_id = dsafeawewrqr, size = 105.2, body ={track_goal: true} / {
+                                                                       {heart: true}/ {size: 200}
+    """
+    mealday_service.update_dish(current_user.id, dish_id, body)
+
+    return APIResponse(status_code=status.HTTP_200_OK, message="Mealhour Update Success")
+
+@dish_router.get("/get/food_data", response_model=Food_Data)
+@inject
+def get_food_data(
+    name: str = Query(..., description="조회할 음식명"),
+    mealday_service: MealDayService = Depends(Provide[Container.mealday_service])
+):
+    """
+    음식명 입력후 칼로리 조회
+    """
+    return mealday_service.get_food_data(name)

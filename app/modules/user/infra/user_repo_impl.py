@@ -7,7 +7,7 @@ from core.auth import Role
 from database import SessionLocal
 from modules.user.domain.repository.user_repo import IUserRepository
 from modules.user.domain.user import User as UserVO
-from modules.user.infra.db_models.user import User
+from modules.user.infra.db_models.user import User#, Mentor
 from modules.user.interface.schema.user_schema import CreateUserBody, Rank
 from utils.db_utils import row_to_dict
 from utils.exceptions.error_code import ErrorCode
@@ -95,3 +95,11 @@ class UserRepository(IUserRepository, ABC):
         with SessionLocal() as db:
             user_list = db.query(User).filter(User.username == username).all()
             return user_list
+
+    # def find_users_mentor_info_by_user_id(self, user_id: str):### 유저의 멘토id를 활용해서 멘토의 user_id를 찾기
+    #     with SessionLocal() as db:
+    #         user= db.query(User).filter(User.id==user_id).first()
+    #         if user and user.mentor_id:
+    #             mentor = db.query(Mentor).filter(Mentor.id==user.mentor_id).first()
+    #             return {"mentor_user_id": mentor.user_id, "username": user.name}
+    #         return None

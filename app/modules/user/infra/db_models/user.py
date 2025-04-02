@@ -1,8 +1,9 @@
 from datetime import datetime, date
 
 import ulid
+
+from sqlalchemy import String, Boolean, DateTime, Enum, Date, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy import String, Boolean, DateTime, Enum, Date
 from database import Base
 from core.auth import Role
 from modules.user.interface.schema.user_schema import Rank, Gender
@@ -32,3 +33,13 @@ class User(Base):  # 회원
     update_date: Mapped[datetime] = mapped_column(DateTime, nullable=False)
 
     # groups: Mapped[list['Group']] = relationship('Group', secondary=Participation, back_populates='users')
+
+
+# class Mentor(Base):  ## 멘토
+#     __tablename__ = "Mentor"
+#
+#     id: Mapped[str] = mapped_column(String(length=26), primary_key=True, nullable=False)
+#     user_id: Mapped[str] = mapped_column(String(length=26), ForeignKey("User.id"), nullable=False)
+#     gym: Mapped[str] = mapped_column(String(length=10), nullable=True, default=None)
+#     FA = Mapped[bool] = mapped_column(Boolean, nullable=True, default=None)
+#     #company_id = Column(Integer, ForeignKey("Company.id"), nullable=True)

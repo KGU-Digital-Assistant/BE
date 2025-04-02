@@ -46,3 +46,7 @@ class IUserRepository(metaclass=ABCMeta):
     @abstractmethod
     def find_by_username_all(self, username: str):
         raise NotImplementedError
+
+    # @abstractmethod
+    # def find_users_mentor_info_by_user_id(self, user_id: str):
+    #     raise NotImplementedError
