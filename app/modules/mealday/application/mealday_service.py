@@ -184,7 +184,7 @@ class MealDayService:
     def register_dish(self, user_id: str, daytime: str, mealtime: MealTime,
                       name: List[str], calorie: List[float], picture: List[File(...)]):
         record_date = self.invert_daytime_to_date(daytime)
-        meal = self.mealday_repo.find_meal_by_date(user_id=user_id,record_date=record_date)
+        meal = self.mealday_repo.find_meal_by_date(user_id=user_id,record_date=record_date, mealtime=mealtime)
         if meal is None:
             meal = self.mealday_repo.create_meal(user_id=user_id, record_date=record_date, mealtime=mealtime)
 
@@ -198,21 +198,23 @@ class MealDayService:
                 blob.upload_from_file(file.file, content_type=file.content_type)
                 picture_path = blob.name
             else:
-                picture_path = None
+                picture_path = "default"
             picture_pathes.append(picture_path)
 
         self.mealday_repo.create_dishes(user_id=user_id, meal_id=meal.id,name=name, calorie=calorie, picture_path=picture_pathes, mealday_id =meal.mealday_id)
 
 
     def find_dish(self, user_id: str, dish_id: str):
-        dish = self.mealday_repo.find_dish(self, user_id= user_id, dish_id= dish_id)
+        dish = self.mealday_repo.find_dish(user_id= user_id, dish_id= dish_id)
         if dish is None:
             raise raise_error(ErrorCode.DISH_NOT_FOUND)
         return dish
 
     def remove_dish(self, user_id: str, dish_id: str):
         picture_path = self.mealday_repo.delete_dish(user_id = user_id, dish_id = dish_id)
-        if picture_path is None:
+        if picture_path == "default":
+            return
+        elif picture_path is None:
             raise raise_error(ErrorCode.DISH_NOT_FOUND)
         else:
             blob = bucket.blob(picture_path)

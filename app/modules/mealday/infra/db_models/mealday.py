@@ -1,5 +1,6 @@
 from datetime import date, datetime
 import ulid
+import sqlalchemy
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy import String, Date, Integer, Float, ForeignKey, UniqueConstraint, DateTime, Enum, Boolean, Index, Table, Column
 from database import Base
@@ -8,11 +9,15 @@ from modules.track.interface.schema.track_schema import MealTime
 
 class MealDay(Base):
     __tablename__ = "MealDay"
-
-    id: Mapped[str] = mapped_column(String(length=26), primary_key=True, nullable=False, default=lambda: str(ulid.new()))
+    id: Mapped[str] = mapped_column(String(length=26), primary_key=True, nullable=False, default=lambda: str(ulid.ULID()))
     user_id: Mapped[str] = mapped_column(String(length=26), ForeignKey("User.id"), nullable=False)
     record_date: Mapped[date] = mapped_column(Date, nullable=False)
-    update_datetime: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=datetime.utcnow())
+    update_datetime: Mapped[datetime] = mapped_column(
+        DateTime,
+        nullable=False,
+        default=datetime.utcnow,
+        server_default=sqlalchemy.text('now()')  # alembic용
+    )
     water: Mapped[float] = mapped_column(Float, nullable=True, default=0.0)
     coffee: Mapped[float] = mapped_column(Float, nullable=True, default=0.0)
     alcohol: Mapped[float] = mapped_column(Float, nullable=True, default=0.0)
@@ -38,7 +43,7 @@ class MealDay(Base):
 
 class Meal(Base):
     __tablename__ = "Meal"
-    id: Mapped[str] = mapped_column(String(length=26), primary_key=True, nullable=False,default=lambda: str(ulid.new()))
+    id: Mapped[str] = mapped_column(String(length=26), primary_key=True, nullable=False,default=lambda: str(ulid.ULID()))
     mealday_id: Mapped[str] = mapped_column(String(length=26), ForeignKey("MealDay.id"), nullable=False)
     mealtime: Mapped[MealTime] = mapped_column(Enum(MealTime), nullable=False) #LUNCH, DINNER 등
     check: Mapped[bool] = mapped_column(Boolean, nullable=True, default=False)
@@ -52,7 +57,7 @@ class Meal(Base):
 class Dish(Base):
     __tablename__ = "Dish"
 
-    id: Mapped[str] = mapped_column(String(length=26), primary_key=True, nullable=False, default=lambda: str(ulid.new()))
+    id: Mapped[str] = mapped_column(String(length=26), primary_key=True, nullable=False, default=lambda: str(ulid.ULID()))
     user_id: Mapped[str] = mapped_column(String(length=26), ForeignKey("User.id"), nullable=False)
     meal_id: Mapped[str] = mapped_column(String(length=26), ForeignKey("Meal.id"), nullable=False)
     name: Mapped[str] = mapped_column(String(length=255), nullable=False, default="새로운 식단 등록")

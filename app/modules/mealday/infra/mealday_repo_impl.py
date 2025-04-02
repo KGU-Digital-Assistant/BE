@@ -27,7 +27,7 @@ class MealDayRepository(IMealDayRepository, ABC):
                 id=mealday.id,
                 user_id=mealday.user_id,
                 record_date=mealday.record_date,
-                update_date=datetime.utcnow(),
+                update_datetime=datetime.utcnow(),
                 water=mealday.water or 0.0,
                 coffee=mealday.coffee or 0.0,
                 alcohol=mealday.alcohol or 0.0,
@@ -151,11 +151,16 @@ class MealDayRepository(IMealDayRepository, ABC):
     ##############MealHour##################################################
     ########################################################################
 
-    def find_meal_by_date(self, user_id: str, record_date: date):
+    def find_meal_by_date(self, user_id: str, record_date: date, mealtime: MealTime):
         with SessionLocal() as db:
-            return (db.query(Meal).join(Meal, MealDay.id == Meal.mealday_id)
-                .join(Dish, Dish.meal_id == Meal.id).filter(MealDay.user_id==user_id, MealDay.record_date==record_date)
-                .first())
+            return (
+                db.query(Meal)
+                .select_from(MealDay)
+                .join(Meal, MealDay.id == Meal.mealday_id)
+                .join(Dish, Dish.meal_id == Meal.id)
+                .filter(MealDay.user_id == user_id, MealDay.record_date == record_date, Meal.mealtime == mealtime)
+                .first()
+            )
 
     def get_all_dishes_by_track_id(self, user_id: str, track_id: str):
         with SessionLocal() as db:
@@ -183,7 +188,7 @@ class MealDayRepository(IMealDayRepository, ABC):
                             dishes.append(Dish_with_datetime(
                                 record_date=mealday.record_date,
                                 mealtime=meal.mealtime,
-                                dishes=dishes_full
+                                dish_list=dishes_full
                             ))
                 date_iter += timedelta(days=1)
 
@@ -236,7 +241,7 @@ class MealDayRepository(IMealDayRepository, ABC):
 
     def find_dish(self, user_id: str, dish_id: str):
         with SessionLocal() as db:
-            return db.query(Dish).filter(Dish.id == dish_id, Dish.user_id==user_id).first()
+            return db.query(Dish).filter(Dish.user_id==user_id, Dish.id == dish_id).first()
 
     def delete_dish(self, user_id: str, dish_id: str):
         with SessionLocal() as db:
@@ -249,7 +254,7 @@ class MealDayRepository(IMealDayRepository, ABC):
             )
             if mealday is None:
                 return None
-            dish = db.query(Dish).filter(Dish.id == dish_id.id, Dish.user_id==user_id).first()
+            dish = db.query(Dish).filter(Dish.id == dish_id, Dish.user_id==user_id).first()
             if dish is None:
                 return None
             mealday.carb -= dish.carb
@@ -266,7 +271,13 @@ class MealDayRepository(IMealDayRepository, ABC):
         with SessionLocal() as db:
             dish = db.query(Dish).filter(Dish.id == _dish.id).first()
             if percent > 0:
-                mealday = db.query(MealDay).filter(MealDay.id == dish.daymeal_id).first()
+                mealday = (
+                    db.query(MealDay)
+                    .join(Meal, MealDay.id == Meal.mealday_id)
+                    .join(Dish, Dish.meal_id == Meal.id)
+                    .filter(Dish.id == dish.id)
+                    .first()
+                )
                 mealday.carb -= (-_dish.carb + dish.carb)
                 mealday.protein -= (-_dish.protein + dish.protein)
                 mealday.fat -= (-_dish.fat + dish.fat)

@@ -13,7 +13,7 @@ from utils.responses.response import APIResponse
 
 mealday_router = APIRouter(prefix="/api/v1/meal_day", tags=["mealday"])
 
-@mealday_router.post("/post/{daytime}", response_model=MealDayResponse_Date)
+@mealday_router.post("/post_date/{daytime}", response_model=MealDayResponse_Date)
 @inject
 def create_mealday_by_date(
         daytime: Annotated[str, Path(description="생성날짜 (형식: YYYY-MM-DD)")],
@@ -25,7 +25,7 @@ def create_mealday_by_date(
     """
     return mealday_service.create_mealday_by_date(current_user.id,daytime)
 
-@mealday_router.post("/post/{year}/{month}", response_model=APIResponse)
+@mealday_router.post("/post_year_month/{year}/{month}", response_model=APIResponse)
 @inject
 def create_mealday_by_month(
         year: Annotated[int, Path(description="생성년도 (형식: 2024)")],
@@ -39,7 +39,7 @@ def create_mealday_by_month(
     created_count = mealday_service.create_mealday_by_month(current_user.id,year,month)
     return APIResponse(status_code=status.HTTP_200_OK, message=f"{created_count}meal days created")
 
-@mealday_router.post("/post/{track_id}", response_model=APIResponse)
+@mealday_router.post("/post_track_id/{track_id}", response_model=APIResponse)
 @inject
 def create_mealday_by_track_id(
         track_id: Annotated[str, Path(description="트랙 id (형식: dasfdsafads)")],
@@ -50,7 +50,7 @@ def create_mealday_by_track_id(
      - 트랙 시작하기누를때 이거 먼저 만들어야함
     - 입력예시 : track_id =f dasfdsf
     """
-    created_count = mealday_service.create_mealday_track_id(current_user.id, track_id)
+    created_count = mealday_service.create_mealday_by_track_id(current_user.id, track_id)
     return APIResponse(status_code=status.HTTP_200_OK, message=f"{created_count}meal days created")
 
 @mealday_router.get("/get", response_model=MealDayResponse_Full)
@@ -103,15 +103,15 @@ def get_all_dishes_by_track_id(
 
 
 
-@mealday_router.post("/dish/register", response_model=APIResponse)
+@mealday_router.post("/dish/register/{daytime}/{mealtime}", response_model=APIResponse)
 @inject
 async def register_dish(
-    current_user: Annotated[CurrentUser, Depends(get_current_user)],
-    daytime: Annotated[str, Path(description=" (형식: YYYY-MM-DD)")],
-    mealtime: Annotated[str, Path(description="시간대 (형식: LUNCH)")],
-    name: Annotated[List[str], Form(..., description="음식 이름 리스트")],
-    calorie: Annotated[List[float], Form(..., description="칼로리 리스트")],
-    picture: Annotated[Optional[List[UploadFile]], File(None, description="사진 리스트. 비어도 OK")] = None,
+    daytime: str = Path(..., description="형식: YYYY-MM-DD"),
+    mealtime: str = Path(..., description="시간대 (형식: LUNCH)"),
+    name: List[str] = Form(..., description="음식 이름 리스트"),
+    calorie: List[float] = Form(..., description="칼로리 리스트"),
+    picture: List[UploadFile] = File(default=[], description="0개 혹은 갯수맞춰서"),
+    current_user: CurrentUser = Depends(get_current_user),
     mealday_service: MealDayService = Depends(Provide[Container.mealday_service])
 ):
     """

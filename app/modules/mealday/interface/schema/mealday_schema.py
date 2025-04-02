@@ -34,7 +34,7 @@ class MealDayResponse_Full(BaseModel):
     id: str
     user_id: str
     record_date: date
-    update_datetime: date
+    update_datetime: datetime
     water: float | None
     coffee: float | None
     alcohol: float | None
@@ -107,6 +107,8 @@ class Dish_Full(BaseModel):
     track_goal: Optional[bool] = None
     label: Optional[int] = None
     trackpart_id: Optional[str] = None
+    class Config:
+        from_attributes = True
 
 class Dish_with_datetime(BaseModel):
     record_date: date
