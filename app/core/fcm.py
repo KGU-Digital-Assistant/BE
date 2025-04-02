@@ -9,10 +9,10 @@ cipher = Fernet(setting.FERNET_KEY)
 
 # firebase json 경로
 path = setting.FIREBASE_PATH
-
+bucket_address = setting.FIREBASE_BUCKET
 # firebase admin sdk 초기화
 cred = credentials.Certificate(path)
-default_app = initialize_app(cred, {'storageBucket': 'ieat-76bd6.appspot.com'})
+default_app = initialize_app(cred, {'storageBucket': bucket_address})
 
 bucket = storage.bucket()
 

@@ -93,7 +93,9 @@ async def remove_moose(
     """
     return mealday_service.remove_moose(file_path)
 
-@mealday_router.get("/get_all_dishes/{track_id}", response_model=List[Dish_with_datetime])
+dish_router = APIRouter(prefix="/api/v1/dish", tags=["dish"])
+
+@dish_router.get("/get_all_dishes/{track_id}", response_model=List[Dish_with_datetime])
 @inject
 def get_all_dishes_by_track_id(
         track_id: Annotated[str, Path(description="트랙 id (형식: dasfdsafads)")],
@@ -103,7 +105,7 @@ def get_all_dishes_by_track_id(
 
 
 
-@mealday_router.post("/dish/register/{daytime}/{mealtime}", response_model=APIResponse)
+@dish_router.post("/dish/register/{daytime}/{mealtime}", response_model=APIResponse)
 @inject
 async def register_dish(
     daytime: str = Path(..., description="형식: YYYY-MM-DD"),
@@ -121,7 +123,7 @@ async def register_dish(
     mealday_service.register_dish(current_user.id, daytime, mealtime, name, calorie, picture)
     return APIResponse(status_code=status.HTTP_200_OK, message="Dish Post Success")
 
-@mealday_router.get("/dish/get/{dish_id}", response_model=Dish_Full)
+@dish_router.get("/dish/get/{dish_id}", response_model=Dish_Full)
 @inject
 async def get_dish(
     current_user: Annotated[CurrentUser, Depends(get_current_user)],
@@ -134,7 +136,7 @@ async def get_dish(
     """
     return mealday_service.find_dish(current_user.id, dish_id)
 
-@mealday_router.post("/dish/remove/{dish_id}", response_model=APIResponse) ## 등록한 Dish 삭제
+@dish_router.post("/dish/remove/{dish_id}", response_model=APIResponse) ## 등록한 Dish 삭제
 @inject
 async def remove_dish(
     current_user: Annotated[CurrentUser, Depends(get_current_user)],
@@ -149,7 +151,7 @@ async def remove_dish(
     return APIResponse(status_code=status.HTTP_200_OK, message="Dish Delete Success")
 
 
-@mealday_router.patch("/dish/update/{dish_id}", response_model=APIResponse)
+@dish_router.patch("/dish/update/{dish_id}", response_model=APIResponse)
 @inject
 def update_dish(
     current_user: Annotated[CurrentUser, Depends(get_current_user)],
@@ -166,7 +168,7 @@ def update_dish(
 
     return APIResponse(status_code=status.HTTP_200_OK, message="Mealhour Update Success")
 
-@mealday_router.get("/get/food_data", response_model=Food_Data)
+@dish_router.get("/get/food_data", response_model=Food_Data)
 @inject
 def get_food_data(
     name: str = Query(..., description="조회할 음식명"),

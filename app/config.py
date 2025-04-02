@@ -27,6 +27,7 @@ class Settings(BaseSettings):
     REDIRECT_URI: str
     FIREBASE_FCM_API_KEY: str
     FIREBASE_PATH: str
+    FIREBASE_BUCKET: str
     SID: str
     AUTH_TOKEN: str
     PHONE_NUMBER: str

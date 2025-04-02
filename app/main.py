@@ -12,7 +12,9 @@ app.container = Container()
 
 app.include_router(user_router.router)
 app.include_router(mealday_router.mealday_router)
+app.include_router(mealday_router.dish_router)
 app.include_router(track_router.router)
+
 
 origins = [
     "*",
