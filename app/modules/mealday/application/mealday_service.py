@@ -1,4 +1,4 @@
-from fastapi import HTTPException,File, Form
+from fastapi import HTTPException, File, Form, UploadFile
 import os, json
 from typing import List
 from ulid import ULID
@@ -182,7 +182,7 @@ class MealDayService:
         return dishes
 
     def register_dish(self, user_id: str, daytime: str, mealtime: MealTime,
-                      name: List[str], calorie: List[float], picture: List[File(...)]):
+                      name: List[str], calorie: List[float], picture: List[UploadFile] = File(...)):
         record_date = self.invert_daytime_to_date(daytime)
         meal = self.mealday_repo.find_meal_by_date(user_id=user_id,record_date=record_date, mealtime=mealtime)
         if meal is None:
