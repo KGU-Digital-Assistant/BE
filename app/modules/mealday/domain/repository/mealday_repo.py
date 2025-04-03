@@ -62,9 +62,3 @@ class IMealDayRepository(metaclass=ABCMeta):
     def update_dish(self, _dish: Dish, percent: float):
         raise NotImplementedError
 
-    def find_food_by_name(self, name: str):
-        raise NotImplementedError
-
-    @abstractmethod
-    def find_food(self, label: int):
-        raise NotImplementedError
