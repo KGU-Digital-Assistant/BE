@@ -8,6 +8,9 @@ from modules.user.application.user_service import UserService
 from modules.user.infra.user_repo_impl import UserRepository
 from modules.mealday.infra.mealday_repo_impl import MealDayRepository
 from modules.mealday.application.mealday_service import MealDayService
+from modules.food.infra.food_repo_impl import FoodRepository
+from modules.food.application.food_service import FoodService
+
 from utils.crypto import Crypto
 
 
@@ -17,6 +20,7 @@ class Container(containers.DeclarativeContainer):
             "modules.user",  # 의존성을 사용하는 모듈
             "modules.track",
             "modules.mealday",
+            "modules.food",
         ]
     )
 
@@ -43,4 +47,12 @@ class Container(containers.DeclarativeContainer):
         TrackService,
         track_repo=track_repo,
         user_service=user_service
+    )
+
+    food_repo = providers.Factory(FoodRepository)
+    food_service = providers.Factory(
+        FoodService,
+        food_repo = food_repo,
+        user_repo = user_repo,
+        crypto = crypto
     )

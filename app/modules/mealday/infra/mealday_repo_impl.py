@@ -9,7 +9,8 @@ from database import SessionLocal, get_db
 from modules.mealday.domain.repository.mealday_repo import IMealDayRepository
 from modules.mealday.domain.mealday import MealDay as MealDayVO
 from modules.mealday.domain.mealday import Meal as MealVO
-from modules.mealday.infra.db_models.mealday import MealDay, Food, Dish, Meal
+from modules.mealday.infra.db_models.mealday import MealDay, Dish, Meal
+from modules.food.infra.db_models.food import Food
 from modules.mealday.interface.schema.mealday_schema import Dish_with_datetime,Dish_Full
 from modules.track.interface.schema.track_schema import MealTime
 from modules.track.infra.db_models.track_participant import TrackParticipant
@@ -307,11 +308,3 @@ class MealDayRepository(IMealDayRepository, ABC):
             dish.calorie = _dish.calorie
             db.commit()
             return dish
-
-    def find_food_by_name(self, name: str):
-        with SessionLocal() as db:
-            return db.query(Food).filter(Food.name == name).first()
-
-    def find_food(self, label: int):
-        with SessionLocal() as db:
-            return db.query(Food).filter(Food.label == label).first()

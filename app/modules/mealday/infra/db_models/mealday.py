@@ -73,26 +73,6 @@ class Dish(Base):
     unit:Mapped[str] = mapped_column(String(length=255), nullable=True, default="gram")  ##저장단위
     size: Mapped[float] = mapped_column(Float, nullable=True, default=0.0) #저장 사이즈
     track_goal: Mapped[bool] = mapped_column(Boolean, nullable=True, default=False)
-    label: Mapped[int] = mapped_column(Integer, nullable=True, default=None)
+    label: Mapped[int] = mapped_column(Integer, nullable=True, default=None)  ## label 필요유무 검토필요
     trackpart_id: Mapped[str] = mapped_column(String(length=26), ForeignKey("TrackParticipant.id"), nullable=True)
     meal: Mapped["Meal"] = relationship("Meal", back_populates="dishes")
-
-class Food(Base):
-    __tablename__ = "Food"
-    label: Mapped[int] = mapped_column(Integer,primary_key=True, nullable=False)
-    name: Mapped[str] = mapped_column(String(length=26), nullable=True, default="음식이름")
-    size: Mapped[float] = mapped_column(Float, nullable=True, default=0.0) #저장 사이즈
-    calorie: Mapped[float] = mapped_column(Float, nullable=True, default=0.0)
-    carb: Mapped[float] = mapped_column(Float, nullable=True, default=0.0)
-    sugar: Mapped[float] = mapped_column(Float, nullable=True, default=0.0)
-    fat: Mapped[float] = mapped_column(Float, nullable=True, default=0.0)
-    protein: Mapped[float] = mapped_column(Float, nullable=True, default=0.0)
-    calcium: Mapped[float] = mapped_column(Float, nullable=True, default=0.0)
-    phosphorus: Mapped[float] = mapped_column(Float, nullable=True, default=0.0)
-    sodium: Mapped[float] = mapped_column(Float, nullable=True, default=0.0)
-    potassium: Mapped[float] = mapped_column(Float, nullable=True, default=0.0)
-    magnesium: Mapped[float] = mapped_column(Float, nullable=True, default=0.0)
-    iron: Mapped[float] = mapped_column(Float, nullable=True, default=0.0)
-    zinc: Mapped[float] = mapped_column(Float, nullable=True, default=0.0)
-    cholesterol: Mapped[float] = mapped_column(Float, nullable=True, default=0.0)
-    trans_fat: Mapped[float] = mapped_column(Float, nullable=True, default=0.0)

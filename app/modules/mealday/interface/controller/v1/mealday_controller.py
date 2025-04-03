@@ -8,7 +8,7 @@ from containers import Container
 from core.auth import CurrentUser, get_current_user
 from modules.mealday.application.mealday_service import MealDayService
 from modules.mealday.interface.schema.mealday_schema import MealDayResponse_Date, MealDayResponse_Full,\
-    Dish_Full,UpdateDishBody, Food_Data, Dish_with_datetime
+    Dish_Full,UpdateDishBody, Dish_with_datetime
 from utils.responses.response import APIResponse
 
 
@@ -169,14 +169,3 @@ def update_dish(
     mealday_service.update_dish(current_user.id, dish_id, body)
 
     return APIResponse(status_code=status.HTTP_200_OK, message="Mealhour Update Success")
-
-@dish_router.get("/get/food_data", response_model=Food_Data)
-@inject
-def get_food_data(
-    name: str = Query(..., description="조회할 음식명"),
-    mealday_service: MealDayService = Depends(Provide[Container.mealday_service])
-):
-    """
-    음식명 입력후 칼로리 조회
-    """
-    return mealday_service.get_food_data(name)

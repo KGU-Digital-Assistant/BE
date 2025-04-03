@@ -253,9 +253,3 @@ class MealDayService:
             raise raise_error(ErrorCode.MEALHOUR_NOT_FOUND)
         percent = self.apply_update_dish(dish, body) ## 1이면 size변경, 0이면 size변경 X
         return self.mealday_repo.update_dish(dish, percent)
-
-    def get_food_data(self, name: str):
-        food= self.mealday_repo.find_food_by_name(name=name)
-        if food is None:
-            raise raise_error(ErrorCode.NO_FOOD)
-        return food
