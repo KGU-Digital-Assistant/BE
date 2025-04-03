@@ -77,7 +77,7 @@ def upgrade() -> None:
     op.create_index(op.f('ix_Dish_picture'), 'Dish', ['picture'], unique=False)
     op.add_column('MealDay', sa.Column('update_datetime', sa.DateTime(), server_default=sa.text('now()'), nullable=False))
     op.create_index('_user_date_index', 'MealDay', ['user_id', 'record_date'], unique=False)
-    op.drop_column('TrackRoutine', 'meal_time')
+    # op.drop_column('TrackRoutine', 'meal_time') 2025-04-02 junhyeong: 0245c8f35e82버젼에서 이미 삭제하고있어서 주석처리
     # ### end Alembic commands ###
 
 
