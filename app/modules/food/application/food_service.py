@@ -18,7 +18,9 @@ class FoodService:
         self.crypto = crypto
 
     def get_food_data(self, name: str):
+        if len(name)<2:
+            raise raise_error(ErrorCode.REQUIRE_2LETTER)
         food= self.food_repo.find_food_by_name(name=name)
-        if food is None:
+        if not food:
             raise raise_error(ErrorCode.NO_FOOD)
         return food

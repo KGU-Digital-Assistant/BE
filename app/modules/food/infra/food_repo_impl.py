@@ -9,7 +9,7 @@ class FoodRepository(IFoodRepository, ABC):
 
     def find_food_by_name(self, name: str):
         with SessionLocal() as db:
-            return db.query(Food).filter(Food.name == name).first()
+            return db.query(Food).filter(Food.name.like(f"%{name}%")).all()
 
     def find_food(self, label: int):
         with SessionLocal() as db:
