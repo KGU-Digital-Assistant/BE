@@ -22,6 +22,33 @@ class FlagStatus(Enum):
     TERMINATED = "TERMINATED"
 
 
+class DateValidator(BaseModel):
+    mealtime: str
+    days: str
+
+    # ✅ 허용된 값 목록
+    ALLOWED_MEAL_TIMES: ClassVar[List[str]] = ["아침", "아점", "점심", "점저", "저녁", "간식"]
+
+    # ✅ mealtime 검증
+    @field_validator("mealtime")
+    def validate_mealtime(cls, value):
+        if value not in cls.ALLOWED_MEAL_TIMES:
+            raise ValueError(f"mealtime은 {cls.ALLOWED_MEAL_TIMES} 중 하나여야 합니다.")
+        return value
+
+    # ✅ days 검증 (1~28의 숫자로 된 문자열만 허용)
+    @field_validator("days")
+    def validate_days(cls, value):
+        day_list = value.split(",")
+        for day in day_list:
+            if not day.isdigit():
+                raise ValueError("days는 숫자만 포함해야 하며, 쉼표로 구분해야 합니다.")
+            num = int(day)
+            if num < 1 or num > 28:
+                raise ValueError("days의 각 값은 1부터 31 사이여야 합니다.")
+        return value
+
+
 class TrackRoutineResponse(BaseModel):
     id: str
     track_id: str
@@ -50,7 +77,7 @@ class CreateTrackBody(BaseModel):
     duration: int
     # start_date: date
 
-    ALLOWED_DURATION: ClassVar[List[int]] = [7, 14, 21, 28]
+    ALLOWED_DURATION: ClassVar[List[int]] = [3, 7, 14, 21, 28]
 
     @field_validator("duration")
     def validate_duration(cls, value):
@@ -62,29 +89,6 @@ class CreateTrackBody(BaseModel):
     # def validate_start_date(cls, value):
     #     if value < date.today():
     #         raise ValueError("start_date must be today or later")
-    #     return value
-
-
-class DateValidator(BaseModel):
-    mealtime: str
-
-    # ✅ 허용된 값 목록
-    ALLOWED_MEAL_TIMES: ClassVar[List[str]] = ["아침", "아점", "점심", "점저", "저녁", "간식"]
-    # ALLOWED_WEEKDAYS: ClassVar[List[str]] = ["월", "화", "수", "목", "금", "토", "일"]
-
-    # ✅ mealtime 검증
-    @field_validator("mealtime")
-    def validate_mealtime(cls, value):
-        if value not in cls.ALLOWED_MEAL_TIMES:
-            raise ValueError(f"mealtime은 {cls.ALLOWED_MEAL_TIMES} 중 하나여야 합니다.")
-        return value
-
-    # ✅ weekday 검증
-    # @field_validator("weekday")
-    # def validate_weekday(cls, value):
-    #     for v in value:
-    #         if v not in cls.ALLOWED_WEEKDAYS:
-    #             raise ValueError(f"weekday는 {cls.ALLOWED_WEEKDAYS} 중 하나여야 합니다.")
     #     return value
 
 
@@ -103,7 +107,7 @@ class UpdateTrackBody(BaseModel):
 class UpdateRoutineBody(DateValidator):
     title: str
     calorie: float
-    days: int
+    days: str
     mealtime: str
 
 

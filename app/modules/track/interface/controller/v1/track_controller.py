@@ -38,10 +38,25 @@ def create_routine(
 ):
     """
     - mealtime 입력: 아침, 점심, 저녁 ....
-    - days 입력: 4268 -> 4일 2일 6일 8일 반복
+    - days 입력: 4, 2, 6, 8, 14 -> 4일 2일 6일 8일 14일 반복
     """
     routine = track_service.create_routine(current_user.id, body)
     return routine
+
+
+@track_router.post("/copy/{track_id}", response_model=TrackResponse)
+@inject
+def copy_track(
+        track_id: str,
+        current_user: Annotated[CurrentUser, Depends(get_current_user)],
+        track_service: TrackService = Depends(Provide[Container.track_service]),
+):
+    """
+    ### 트랙 복제
+    - 재시작할때
+
+    """
+    return track_service.copy_track(track_id, current_user.id)
 
 
 @track_router.get("/{track_id}", response_model=TrackResponse)
@@ -142,17 +157,6 @@ def delete_routine(
         track_service: TrackService = Depends(Provide[Container.track_service]),
 ):
     track_service.delete_routine(user_id=current_user.id, routine_id=routine_id)
-    return APIResponse(status_code=status.HTTP_200_OK)
-
-
-@routine_router.delete("/date/{routine_date_id}", response_model=APIResponse)
-@inject
-def delete_routine_date(
-        current_user: Annotated[CurrentUser, Depends(get_current_user)],
-        routine_date_id: str,
-        track_service: TrackService = Depends(Provide[Container.track_service]),
-):
-    track_service.delete_routine_date(user_id=current_user.id, routine_date_id=routine_date_id)
     return APIResponse(status_code=status.HTTP_200_OK)
 
 
