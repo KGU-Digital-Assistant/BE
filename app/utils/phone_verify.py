@@ -11,7 +11,7 @@ import hashlib
 from datetime import datetime, timedelta, timezone
 from starlette.config import Config
 from pydantic import BaseModel
-from config import get_settings
+from app_config import get_settings
 from utils.exceptions.error_code import ErrorCode
 from utils.exceptions.handlers import raise_error
 
