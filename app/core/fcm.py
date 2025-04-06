@@ -1,6 +1,6 @@
 from cryptography.fernet import Fernet
 
-from config import get_settings
+from app_config import get_settings
 from firebase_admin import credentials, storage, initialize_app,messaging
 
 # 키 생성 (애플리케이션에서 한번만 생성하고 안전한 곳에 저장)

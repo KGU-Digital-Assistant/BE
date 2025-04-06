@@ -9,6 +9,7 @@ from starlette.config import Config
 # # .env 파일 강제 로드
 # load_dotenv(dotenv_path=".env")
 
+
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
         env_file=".env",
@@ -35,6 +36,7 @@ class Settings(BaseSettings):
     SMS_SECRET_KEY: str
     MY_PHONE_NUMBER: str
     FERNET_KEY: str
+
 
 @lru_cache
 def get_settings():

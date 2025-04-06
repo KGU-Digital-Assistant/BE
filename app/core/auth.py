@@ -7,11 +7,11 @@ from fastapi import HTTPException, Depends, status
 from fastapi.security import OAuth2PasswordBearer
 from jose import jwt, JWTError
 
-from config import Settings
+from app_config import Settings, get_settings
 from utils.exceptions.error_code import ErrorCode
 from utils.exceptions.handlers import raise_error
 
-settings = Settings()
+settings = get_settings()
 
 SECRET_KEY = settings.JWT_SECRET_KEY
 ALGORITHM = "HS256"

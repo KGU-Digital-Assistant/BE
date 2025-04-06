@@ -44,6 +44,7 @@ class TrackRepository(ITrackRepository, ABC):
                 clock=routine_vo.clock,
                 track=track
             )
+            track.routines.append(routine)
             db.add(routine)
             db.commit()
             return TrackRoutineVO(**row_to_dict(routine))
@@ -89,6 +90,17 @@ class TrackRepository(ITrackRepository, ABC):
             if routine is None:
                 return None
             return TrackRoutineVO(**row_to_dict(routine))
+
+    def find_all_routine_by_track_id(self, track_id: str):
+        with SessionLocal() as db:
+            routines = db.query(TrackRoutine).filter(TrackRoutine.track_id == track_id).all()
+            if routines is None:
+                return None
+
+            routine_list = []
+            for routine in routines:
+                routine_list.append(TrackRoutineVO(**row_to_dict(routine)))
+            return routine_list
 
     def update_track(self, track_id: str, user_id: str, body: UpdateTrackBody):
         with SessionLocal() as db:

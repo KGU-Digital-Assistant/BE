@@ -67,7 +67,7 @@ class TrackService:
         user = self.user_service.get_user_by_id(user_id)
         routine_list = []
 
-        for day in body.days:
+        for day in body.days.split(","):
             _day = int(day)
             routine_list.append(
                 TrackRoutine(
@@ -142,3 +142,19 @@ class TrackService:
             idx += 1
 
         return days_grouped
+
+    def copy_track(self, track_id: str, user_id: str):
+        track = self.validate_track(track_id, user_id)
+        routines = self.track_repo.find_all_routine_by_track_id(track_id)
+
+        track.id = str(ULID())
+        track.routines = []
+        copied_track = self.track_repo.save(track)
+
+        new_routines = []
+        for routine in routines:
+            routine.id = str(ULID())
+            new_routines.append(routine)
+
+        copied_track.routines = self.track_repo.routines_save(new_routines, copied_track)
+        return copied_track

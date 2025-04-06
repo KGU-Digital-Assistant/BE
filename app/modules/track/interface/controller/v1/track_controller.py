@@ -14,10 +14,11 @@ from modules.track.interface.schema.track_schema import CreateTrackBody, TrackRe
     TrackUpdateResponse, TrackParticipant, TrackStartBody
 from utils.responses.response import APIResponse
 
-router = APIRouter(prefix="/api/v1/track", tags=["track"])
+track_router = APIRouter(prefix="/api/v1/track", tags=["track"])
+routine_router = APIRouter(prefix="/api/v1/routine", tags=["track routine"])
 
 
-@router.post("/", response_model=TrackResponse)
+@track_router.post("/", response_model=TrackResponse)
 @inject
 def create_track(
     current_user: Annotated[CurrentUser, Depends(get_current_user)],
@@ -28,7 +29,7 @@ def create_track(
     return track
 
 
-@router.post("/routines", response_model=List[TrackRoutineResponse])
+@routine_router.post("/", response_model=List[TrackRoutineResponse])
 @inject
 def create_routine(
         current_user: Annotated[CurrentUser, Depends(get_current_user)],
@@ -37,13 +38,28 @@ def create_routine(
 ):
     """
     - mealtime 입력: 아침, 점심, 저녁 ....
-    - days 입력: 4268 -> 4일 2일 6일 8일 반복
+    - days 입력: 4, 2, 6, 8, 14 -> 4일 2일 6일 8일 14일 반복
     """
     routine = track_service.create_routine(current_user.id, body)
     return routine
 
 
-@router.get("/{track_id}", response_model=TrackResponse)
+@track_router.post("/copy/{track_id}", response_model=TrackResponse)
+@inject
+def copy_track(
+        track_id: str,
+        current_user: Annotated[CurrentUser, Depends(get_current_user)],
+        track_service: TrackService = Depends(Provide[Container.track_service]),
+):
+    """
+    ### 트랙 복제
+    - 재시작할때
+
+    """
+    return track_service.copy_track(track_id, current_user.id)
+
+
+@track_router.get("/{track_id}", response_model=TrackResponse)
 @inject
 def get_track(
         current_user: Annotated[CurrentUser, Depends(get_current_user)],
@@ -51,12 +67,12 @@ def get_track(
         track_service: TrackService = Depends(Provide[Container.track_service]),
 ):
     """
-    (트랙 + 루틴) 조회
+    본인이 만든 (트랙 + 루틴) 조회
     """
     return track_service.get_track_by_id(track_id=track_id, user_id=current_user.id)
 
 
-@router.get("/day/group/{track_id}", response_model=List[List[TrackRoutineResponse]])
+@routine_router.get("/day/group/{track_id}", response_model=List[List[TrackRoutineResponse]])
 @inject
 def get_routine_list(
         current_user: Annotated[CurrentUser, Depends(get_current_user)],
@@ -72,7 +88,7 @@ def get_routine_list(
     return track_service.get_routine_list(track_id=track_id, user_id=current_user.id)
 
 
-@router.get("/routine/{routine_id}", response_model=TrackRoutineResponse)
+@routine_router.get("/{routine_id}", response_model=TrackRoutineResponse)
 @inject
 def get_routine(
         current_user: Annotated[CurrentUser, Depends(get_current_user)],
@@ -85,7 +101,7 @@ def get_routine(
     return track_service.get_routine_by_id(routine_id, current_user.id)
 
 
-@router.get("/track/list", response_model=List[TrackUpdateResponse])
+@track_router.get("/track/list", response_model=List[TrackUpdateResponse])
 @inject
 def get_tracks(
         current_user: Annotated[CurrentUser, Depends(get_current_user)],
@@ -97,7 +113,7 @@ def get_tracks(
     return track_service.get_tracks(user_id=current_user.id)
 
 
-@router.put("/{track_id}", response_model=TrackUpdateResponse)
+@track_router.put("/{track_id}", response_model=TrackUpdateResponse)
 @inject
 def update_track(
         current_user: Annotated[CurrentUser, Depends(get_current_user)],
@@ -111,7 +127,7 @@ def update_track(
     return track_service.update_track(user_id=current_user.id, track_id=track_id, body=body)
 
 
-@router.put("/routine/{routine_id}", response_model=TrackRoutineResponse)
+@routine_router.put("/{routine_id}", response_model=TrackRoutineResponse)
 @inject
 def update_routine(
         current_user: Annotated[CurrentUser, Depends(get_current_user)],
@@ -122,7 +138,7 @@ def update_routine(
     return track_service.update_routine(user_id=current_user.id, routine_id=routine_id, body=body)
 
 
-@router.delete("/{track_id}", response_model=APIResponse)
+@track_router.delete("/{track_id}", response_model=APIResponse)
 @inject
 def delete_track(
         current_user: Annotated[CurrentUser, Depends(get_current_user)],
@@ -133,7 +149,7 @@ def delete_track(
     return APIResponse(status_code=status.HTTP_200_OK)
 
 
-@router.delete("/routine/{routine_id}", response_model=APIResponse)
+@routine_router.delete("/{routine_id}", response_model=APIResponse)
 @inject
 def delete_routine(
         current_user: Annotated[CurrentUser, Depends(get_current_user)],
@@ -144,18 +160,7 @@ def delete_routine(
     return APIResponse(status_code=status.HTTP_200_OK)
 
 
-@router.delete("/routine/date/{routine_date_id}", response_model=APIResponse)
-@inject
-def delete_routine_date(
-        current_user: Annotated[CurrentUser, Depends(get_current_user)],
-        routine_date_id: str,
-        track_service: TrackService = Depends(Provide[Container.track_service]),
-):
-    track_service.delete_routine_date(user_id=current_user.id, routine_date_id=routine_date_id)
-    return APIResponse(status_code=status.HTTP_200_OK)
-
-
-@router.post("/start/{track_id}", response_model=TrackParticipant)
+@track_router.post("/start/{track_id}", response_model=TrackParticipant)
 @inject
 def start_track(
         current_user: Annotated[CurrentUser, Depends(get_current_user)],
