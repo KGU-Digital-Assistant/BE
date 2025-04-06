@@ -6,6 +6,7 @@ from containers import Container
 from modules.user.interface.controller.v1 import user_controller as user_router
 from modules.mealday.interface.controller.v1 import mealday_controller as mealday_router
 from modules.track.interface.controller.v1 import track_controller as track_router
+from modules.food.interface.controller.v1 import food_controller as food_router
 
 app = FastAPI()
 app.container = Container()
@@ -15,6 +16,7 @@ app.include_router(mealday_router.mealday_router)
 app.include_router(mealday_router.dish_router)
 app.include_router(track_router.track_router)
 app.include_router(track_router.routine_router)
+app.include_router(food_router.router)
 
 
 origins = [
