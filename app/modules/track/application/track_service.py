@@ -3,14 +3,16 @@ from typing import List
 
 from dependency_injector.wiring import inject
 
+from modules.food.application.food_service import FoodService
 from modules.track.domain.track_participant import TrackParticipant as TrackParticipantVO
 from modules.track.domain.repository.track_repo import ITrackRepository
 
 from ulid import ULID
 
 from modules.track.domain.track import Track, TrackRoutine
+from modules.track.domain.track_routine_food import RoutineFood
 from modules.track.interface.schema.track_schema import CreateTrackRoutineBody, UpdateRoutineBody, \
-    TrackResponse, UpdateTrackBody, TrackUpdateResponse, TrackStartBody, CreateTrackBody
+    TrackResponse, UpdateTrackBody, TrackUpdateResponse, TrackStartBody, CreateTrackBody, RoutineFoodRequest
 from modules.user.application.user_service import UserService
 from modules.user.domain.user import User
 from utils.db_utils import orm_to_pydantic_dataclass, orm_to_pydantic
@@ -25,9 +27,11 @@ class TrackService:
             self,
             track_repo: ITrackRepository,
             user_service: UserService,
+            food_service: FoodService,
     ):
         self.track_repo = track_repo
         self.user_service = user_service
+        self.food_service = food_service
 
     def validate_track(self, track_id: str, user_id: str):
         track = self.track_repo.find_by_id(track_id)
@@ -66,22 +70,58 @@ class TrackService:
         track = self.validate_track(body.track_id, user_id)
         user = self.user_service.get_user_by_id(user_id)
         routine_list = []
+        routine_food_body = []
+        calories = 0
+
+        for foods in body.foods:
+            routine_food = RoutineFood(
+                id="",
+                track_routine_id="",
+                food_label=foods.food_label,
+                quantity=foods.quantity,
+            )
+            routine_food_body.append(routine_food)
+            food = self.food_service.get_food_data(food_label=foods.food_label)
+            calories += (food.calories * routine_food.quantity)
 
         for day in body.days.split(","):
             _day = int(day)
-            routine_list.append(
-                TrackRoutine(
+            new_routine = TrackRoutine(
                     id=str(ULID()),
                     track_id=track.id,
                     mealtime=time_parse(body.mealtime),
                     days=_day,
                     title=body.title,
-                    calorie=body.calorie
-                )
+                    calorie=calories,
             )
+
+            new_routine.routine_foods = []
+            for food in routine_food_body:
+                new_routine.routine_foods.append(
+                    RoutineFood(
+                        id=str(ULID()),
+                        track_routine_id=new_routine.id,
+                        food_label=food.food_label,
+                        quantity=food.quantity,
+                    )
+                )
+            routine_list.append(new_routine)
+
         routines = self.track_repo.routines_save(routine_list, track)
         sorted_routines = sorted(routines, key=lambda routine: routine.days)
         return sorted_routines
+
+    def create_routine_food(self, routine_id: str, body: RoutineFoodRequest, user_id: str):
+        routine = self.validate_routine(routine_id, user_id)
+        new_routine_food = RoutineFood(
+            id=str(ULID()),
+            track_routine_id=routine.id,
+            food_label=body.food_label,
+            quantity=body.quantity,
+        )
+        food = self.food_service.get_food_data(body.food_label)
+        routine.calorie += (food.calorie * body.quantity)
+        return self.track_repo.routine_food_save(new_routine_food, routine)
 
     def get_routine_by_id(self, routine_id: str, user_id: str):
         routine = self.track_repo.find_routine_by_id(routine_id)
@@ -111,11 +151,34 @@ class TrackService:
         routine.days = body.days
         return self.track_repo.update_routine(routine)
 
+    def update_routine_food(self, user_id: str, routine_food_id: str, body: RoutineFoodRequest):
+        routine_food = self.track_repo.find_routine_food_by_id(routine_food_id)
+        if routine_food is None:
+            raise_error(ErrorCode.TRACK_ROUTINE_FOOD_NOT_FOUND)
+        routine = self.validate_routine(routine_food.track_routine_id, user_id)
+        old_food = self.food_service.get_food_data(routine_food.food_label)
+
+        new_food = self.food_service.get_food_data(body.food_label)
+        calories = (new_food.calorie * body.quantity) - (old_food.calorie * routine_food.quantity)
+
+        routine_food.food_label = body.food_label
+        routine_food.quantity = body.quantity
+
+        return self.track_repo.update_routine_food(routine.id, routine_food, calories)
+
     def delete_track(self, track_id: str, user_id: str):
         self.track_repo.delete_track(track_id, user_id)
 
     def delete_routine(self, user_id: str, routine_id: str):
         self.track_repo.delete_routine(routine_id, user_id)
+
+    def delete_routine_food(self, user_id: str, routine_food_id: str):
+        routine_food = self.track_repo.find_routine_food_by_id(routine_food_id)
+        if routine_food is None:
+            raise_error(ErrorCode.TRACK_ROUTINE_FOOD_NOT_FOUND)
+        food = self.food_service.get_food_data(routine_food.food_label)
+        routine = self.validate_routine(routine_food.track_routine_id, user_id)
+        return self.track_repo.delete_routine_food(routine.id, routine_food_id, food.calorie * routine_food.quantity)
 
     def get_tracks(self, user_id: str):
         return self.track_repo.find_tracks_by_id(user_id)
@@ -158,3 +221,10 @@ class TrackService:
 
         copied_track.routines = self.track_repo.routines_save(new_routines, copied_track)
         return copied_track
+
+    def get_routine_food_by_id(self, routine_food_id: str, user_id: str):
+        routine_food = self.track_repo.find_routine_food_by_id(routine_food_id)
+        if routine_food is None:
+            raise_error(ErrorCode.TRACK_ROUTINE_FOOD_NOT_FOUND)
+        self.validate_routine(routine_food.track_routine_id, user_id)
+        return routine_food

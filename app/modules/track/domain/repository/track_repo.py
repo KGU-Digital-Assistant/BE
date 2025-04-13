@@ -4,6 +4,7 @@ from typing import List
 
 from modules.track.domain.track_participant import TrackParticipant as TrackParticipantVO
 from modules.track.domain.track import Track, TrackRoutine
+from modules.track.domain.track_routine_food import RoutineFood
 from modules.track.interface.schema.track_schema import UpdateTrackBody
 
 
@@ -53,9 +54,21 @@ class ITrackRepository(metaclass=ABCMeta):
         raise NotImplementedError
 
     @abstractmethod
-    def routine_save(self, routine: TrackRoutine, track: Track):
+    def find_all_routine_by_track_id(self, track_id):
         raise NotImplementedError
 
     @abstractmethod
-    def find_all_routine_by_track_id(self, track_id):
+    def delete_routine_food(self, routine_id: str, routine_food_id: str, calories: float):
+        raise NotImplementedError
+
+    @abstractmethod
+    def find_routine_food_by_id(self, routine_food_id: str):
+        raise NotImplementedError
+
+    @abstractmethod
+    def routine_food_save(self, new_routine_food: RoutineFood, routine_vo: TrackRoutine):
+        raise NotImplementedError
+
+    @abstractmethod
+    def update_routine_food(self, routine_id: str, routine_food: RoutineFood, calories: float):
         raise NotImplementedError

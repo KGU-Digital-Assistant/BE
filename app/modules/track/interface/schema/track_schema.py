@@ -49,6 +49,13 @@ class DateValidator(BaseModel):
         return value
 
 
+class RoutineFoodResponse(BaseModel):
+    id: str
+    track_routine_id: str
+    food_label: int
+    quantity: int
+
+
 class TrackRoutineResponse(BaseModel):
     id: str
     track_id: str
@@ -58,6 +65,12 @@ class TrackRoutineResponse(BaseModel):
     mealtime: MealTime
     days: int
     clock: time
+    routine_foods: Optional[List[RoutineFoodResponse]]
+
+
+class RoutineFoodRequest(BaseModel):
+    food_label: int
+    quantity: int
 
 
 class TrackResponse(BaseModel):
@@ -99,6 +112,8 @@ class CreateTrackRoutineBody(DateValidator):
     days: str
     mealtime: str
 
+    foods: List[RoutineFoodRequest]
+
 
 class UpdateTrackBody(BaseModel):
     name: str
@@ -109,11 +124,6 @@ class UpdateRoutineBody(DateValidator):
     calorie: float
     days: str
     mealtime: str
-
-
-# class UpdateRoutineDateBody(DateValidator):
-#     mealtime: str
-#     weekday: str
 
 
 class TrackUpdateResponse(CreateTrackBody):

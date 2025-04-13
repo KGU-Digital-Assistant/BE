@@ -5,7 +5,7 @@ from fastapi import HTTPException, status
 class ErrorCode(Enum):
     # Track 관련 에러 코드
     ROUTINE_DAYS_SO_OVER = (status.HTTP_400_BAD_REQUEST, "루틴 days가 트랙 duration보다 큽니다.")
-    TRACK_ROUTINE_DATE_NOT_FOUND = (status.HTTP_404_NOT_FOUND, "루틴 Date가 존재하지 않습니다.")
+    TRACK_ROUTINE_FOOD_NOT_FOUND = (status.HTTP_404_NOT_FOUND, "ROUTINE FOOD가 존재하지 않습니다.")
     TRACK_ROUTINE_NOT_FOUND = (status.HTTP_404_NOT_FOUND, "루틴이 존재하지 않습니다.")
     TRACK_NOT_FOUND = (status.HTTP_404_NOT_FOUND, "트랙이 존재하지 않습니다.")
 

@@ -10,9 +10,11 @@ from database import SessionLocal
 from modules.track.domain.repository.track_repo import ITrackRepository
 from modules.track.domain.track import Track as TrackVO
 from modules.track.domain.track import TrackRoutine as TrackRoutineVO
+from modules.track.domain.track_routine_food import RoutineFood as RoutineFoodVO
 from modules.track.domain.track_participant import TrackParticipant as TrackParticipantVO
 from modules.track.infra.db_models.track import Track, TrackRoutine
 from modules.track.infra.db_models.track_participant import TrackParticipant
+from modules.track.infra.db_models.track_routine_food import RoutineFood
 from modules.track.interface.schema.track_schema import UpdateTrackBody, TrackRoutineList
 from modules.user.infra.db_models.user import User
 from utils.db_utils import row_to_dict
@@ -30,59 +32,74 @@ class TrackRepository(ITrackRepository, ABC):
             db.commit()
             return TrackVO(**row_to_dict(track))
 
-    def routine_save(self, routine_vo: TrackRoutine, track_vo: Track):
-        with SessionLocal() as db:
-            track = db.query(Track).filter_by(id=track_vo.id).first()
-            routine = TrackRoutine(
-                id=routine_vo.id,
-                track_id=track_vo.id,
-                title=routine_vo.title,
-                calorie=routine_vo.calorie,
-                delete=routine_vo.delete,
-                mealtime=routine_vo.mealtime,
-                days=routine_vo.days,
-                clock=routine_vo.clock,
-                track=track
-            )
-            track.routines.append(routine)
-            db.add(routine)
-            db.commit()
-            return TrackRoutineVO(**row_to_dict(routine))
-
-    def routines_save(self, routine_vo: List[TrackRoutineVO], track_vo: TrackVO):
+    def routines_save(self, routine_list_vo: List[TrackRoutineVO], track_vo: TrackVO):
         with SessionLocal() as db:
 
             track = db.query(Track).filter(Track.id == track_vo.id).first()
 
             routines = []
-            for routine in routine_vo:
+            for routine in routine_list_vo:
+                routine_foods_db = []
+                res_foods = []
+                for routine_food in routine.routine_foods:
+                    new_routine_food = RoutineFood(
+                        id=routine_food.id,
+                        track_routine_id=routine_food.track_routine_id,
+                        food_label=routine_food.food_label,
+                        quantity=routine_food.quantity,
+                    )
+
+                    db.add(new_routine_food)
+                    routine_foods_db.append(new_routine_food)
+                    res_foods.append(RoutineFoodVO(**row_to_dict(new_routine_food)))
+
                 new_routine = TrackRoutine(
                     id=routine.id,
-                    track_id=routine.track_id,
+                    track_id=track_vo.id,
                     title=routine.title,
                     calorie=routine.calorie,
                     delete=routine.delete,
                     mealtime=routine.mealtime,
                     days=routine.days,
                     clock=routine.clock,
-                    track=track
+                    track=track,
+                    routine_foods=routine_foods_db
                 )
                 track.routines.append(new_routine)
                 db.add(new_routine)
-                routines.append(TrackRoutineVO(**row_to_dict(new_routine)))
+
+                res_routine = TrackRoutineVO(**row_to_dict(new_routine))
+                res_routine.routine_foods = res_foods
+                routines.append(res_routine)
             db.commit()
             return routines
+
+    def routine_food_save(self, routine_food_vo: RoutineFood, routine_vo: TrackRoutineVO):
+        with SessionLocal() as db:
+            routine_food = RoutineFood(
+                id=routine_food_vo.id,
+                track_routine_id=routine_food_vo.track_routine_id,
+                food_label=routine_food_vo.food_label,
+                quantity=routine_food_vo.quantity,
+            )
+            db.add(routine_food)
+
+            routine = db.query(TrackRoutine).filter(TrackRoutine.id == routine_vo.id).first()
+            routine.calorie = routine_vo.calorie
+            db.commit()
+            return RoutineFood(**row_to_dict(routine_food))
 
     def find_by_id(self, track_id: str) -> TrackVO | None:
         with (SessionLocal() as db):
             track = db.query(Track
-                    ).options(joinedload(Track.routines)
-                    ).filter(Track.id == track_id
-                    ).first()
+                             ).options(
+                                joinedload(Track.routines).joinedload(TrackRoutine.routine_foods)
+                            ).filter(Track.id == track_id
+                            ).first()
 
             if track is None:
                 return None
-        return TrackVO(**row_to_dict(track))
+            return TrackVO(**row_to_dict(track))
 
     def find_routine_by_id(self, routine_id: str):
         with SessionLocal() as db:
@@ -101,6 +118,13 @@ class TrackRepository(ITrackRepository, ABC):
             for routine in routines:
                 routine_list.append(TrackRoutineVO(**row_to_dict(routine)))
             return routine_list
+
+    def find_routine_food_by_id(self, routine_food_id: str):
+        with SessionLocal() as db:
+            routine_food = db.query(RoutineFood).filter(RoutineFood.id == routine_food_id).first()
+            if routine_food is None:
+                return None
+            return RoutineFoodVO(**row_to_dict(routine_food))
 
     def update_track(self, track_id: str, user_id: str, body: UpdateTrackBody):
         with SessionLocal() as db:
@@ -132,28 +156,25 @@ class TrackRepository(ITrackRepository, ABC):
             db.commit()
         return TrackRoutineVO(**row_to_dict(routine))
 
-    # def update_routine_date(self, routine_date_vo: TrackRoutineDateVO):
-    #     with SessionLocal() as db:
-    #         routine_date = db.query(TrackRoutineDate
-    #                                 ).options(joinedload(TrackRoutineDate.routine)
-    #                                 ).filter(TrackRoutineDate.id == routine_date_vo.id).first()
-    #
-    #         if routine_date is None:
-    #             raise raise_error(ErrorCode.TRACK_ROUTINE_DATE_NOT_FOUND)
-    #
-    #         routine_date.weekday = routine_date.weekday
-    #         routine_date.mealtime = routine_date.mealtime
-    #         routine_date.days = routine_date.days
-    #         db.commit()
-    #         return TrackRoutineDateVO(**row_to_dict(routine_date))
+    def update_routine_food(self, routine_id: str, routine_food_vo: RoutineFood, calories: float):
+        with SessionLocal() as db:
+            routine = db.query(TrackRoutine).filter(TrackRoutine.id == routine_id).first()
+            if routine is None:
+                return None
+
+            routine.calorie += calories
+
+            routine_food = db.query(RoutineFood).filter(RoutineFood.id == routine_food_vo.id).first()
+            routine_food.food_label = routine_food_vo.food_label
+            routine_food.quantity = routine_food_vo.quantity
+            db.commit()
+            return RoutineFood(**row_to_dict(routine_food))
 
     def delete_track(self, track_id: str, user_id: str):
         with SessionLocal() as db:
             track = db.query(Track).filter(Track.id == track_id).first()
             if track is None:
                 raise_error(ErrorCode.TRACK_NOT_FOUND)
-            if track.user_id != user_id:
-                raise_error(ErrorCode.USER_NOT_AUTHENTICATED)
 
             db.delete(track)
             db.commit()
@@ -162,14 +183,28 @@ class TrackRepository(ITrackRepository, ABC):
         with SessionLocal() as db:
             routine = db.query(TrackRoutine).filter(TrackRoutine.id == routine_id).first()
             if routine is None:
-                raise_error(ErrorCode.TRACK_NOT_FOUND)
+                raise_error(ErrorCode.TRACK_ROUTINE_NOT_FOUND)
             track = db.query(Track).filter(Track.id == routine.track_id).first()
             if track is None:
                 raise_error(ErrorCode.TRACK_NOT_FOUND)
-            if track.user_id != user_id:
-                raise_error(ErrorCode.USER_NOT_AUTHENTICATED)
+
             db.delete(routine)
             db.commit()
+
+    def delete_routine_food(self, routine_id: str, routine_food_id: str, calories: float):
+        with SessionLocal() as db:
+            routine = db.query(TrackRoutine).filter(TrackRoutine.id == routine_id).first()
+            if routine is None:
+                raise_error(ErrorCode.TRACK_ROUTINE_NOT_FOUND)
+            routine_food = db.query(RoutineFood).filter(RoutineFood.id == routine_food_id).first()
+            routine.calorie -= calories
+
+            for food in routine.routine_foods:
+                if routine_food.id == food.id:
+                    db.delete(food)
+                    break
+            db.commit()
+        return self.find_routine_by_id(routine_id)
 
     def find_tracks_by_id(self, user_id: str):
         with SessionLocal() as db:
