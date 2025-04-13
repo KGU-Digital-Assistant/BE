@@ -7,7 +7,9 @@ from modules.track.interface.schema.track_schema import MealTime
 class Dish:  # 식단등록
     id: str
     user_id: str
-    meal_id: str
+    mealday_id: str
+    mealtime: MealTime
+    days: int = field(default=0)
     name: str = field(default="새로운 식단 등록")
     picture: Optional[str] = None
     text: str = field(default="내용 입력")
@@ -23,16 +25,7 @@ class Dish:  # 식단등록
     track_goal: bool = field(default=False)
     label: Optional[int] = None
     trackpart_id: Optional[str] = None # 트랙참여 id
-    meal: Optional["Meal"] = field(default=None)
-
-@dataclass
-class Meal: # 식사
-    id: str
-    mealday_id: str
-    mealtime: MealTime
-    check: bool = field(default=False) #완료체크
     mealday: Optional["MealDay"] = field(default=None)
-    dishes: List[Dish] = field(default_factory=list)
 
 @dataclass
 class MealDay:
@@ -56,7 +49,5 @@ class MealDay:
     weight: float = field(default=0.0)
     routine_success_rate: float = field(default=0.0)
     track_id: Optional[str] = None
-
-    # 관계 매핑을 위한 필드
-    meals: List[Meal] = field(default_factory=list)
+    dishes: List[Dish] = field(default_factory=list)
 

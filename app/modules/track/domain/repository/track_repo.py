@@ -72,3 +72,7 @@ class ITrackRepository(metaclass=ABCMeta):
     @abstractmethod
     def update_routine_food(self, routine_id: str, routine_food: RoutineFood, calories: float):
         raise NotImplementedError
+
+    @abstractmethod
+    def find_trackpart_by_user_track_id(self, user_id: str, track_id: str):
+        raise NotImplementedError
