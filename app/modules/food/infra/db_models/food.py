@@ -1,10 +1,9 @@
-from datetime import date, datetime
-import ulid
-import sqlalchemy
+from typing import List
+
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy import String, Date, Integer, Float, ForeignKey, UniqueConstraint, DateTime, Enum, Boolean, Index, Table, Column
 from database import Base
-from modules.track.interface.schema.track_schema import MealTime
+
 
 class Food(Base):
     __tablename__ = "Food"
@@ -25,3 +24,7 @@ class Food(Base):
     zinc: Mapped[float] = mapped_column(Float, nullable=True, default=0.0)
     cholesterol: Mapped[float] = mapped_column(Float, nullable=True, default=0.0)
     trans_fat: Mapped[float] = mapped_column(Float, nullable=True, default=0.0)
+
+    routine_foods: Mapped[list["RoutineFood"]] = relationship(
+        back_populates="food", cascade="all, delete-orphan"
+    )
