@@ -1,5 +1,10 @@
 from dataclasses import dataclass, field
+from typing import List
 
+from modules.track.domain.track_routine_food import RoutineFood
+
+
+@dataclass
 class Food:
     label: int
     name: str = field(default="음식이름")
@@ -19,4 +24,4 @@ class Food:
     cholesterol: float = field(default=0.0)
     trans_fat: float = field(default=0.0)
 
-
+    routine_foods: List[RoutineFood] = field(default_factory=list)

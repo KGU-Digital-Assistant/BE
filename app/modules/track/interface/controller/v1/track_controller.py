@@ -11,11 +11,12 @@ from modules.track.application import track_service
 from modules.track.application.track_service import TrackService
 from modules.track.interface.schema.track_schema import CreateTrackBody, TrackResponse, CreateTrackRoutineBody, \
     TrackRoutineResponse, UpdateTrackBody, UpdateRoutineBody, \
-    TrackUpdateResponse, TrackParticipant, TrackStartBody
+    TrackUpdateResponse, TrackParticipant, TrackStartBody, RoutineFoodResponse, RoutineFoodRequest
 from utils.responses.response import APIResponse
 
 track_router = APIRouter(prefix="/api/v1/track", tags=["track"])
 routine_router = APIRouter(prefix="/api/v1/routine", tags=["track routine"])
+routine_food_router = APIRouter(prefix="/api/v1/routine/food", tags=["routine food"])
 
 
 @track_router.post("/", response_model=TrackResponse)
@@ -54,9 +55,22 @@ def copy_track(
     """
     ### 트랙 복제
     - 재시작할때
-
     """
     return track_service.copy_track(track_id, current_user.id)
+
+
+@routine_food_router.post("/{routine_id}", response_model=RoutineFoodResponse)
+@inject
+def create_routine_food(
+        routine_id: str,
+        body: RoutineFoodRequest,
+        current_user: Annotated[CurrentUser, Depends(get_current_user)],
+        track_service: TrackService = Depends(Provide[Container.track_service]),
+):
+    """
+    루틴에 제품(음식) 추가하기
+    """
+    return track_service.create_routine_food(routine_id, body, current_user.id)
 
 
 @track_router.get("/{track_id}", response_model=TrackResponse)
@@ -113,6 +127,19 @@ def get_tracks(
     return track_service.get_tracks(user_id=current_user.id)
 
 
+@routine_food_router.get("/{routine_food_id}", response_model=RoutineFoodResponse)
+@inject
+def get_routine_food(
+        current_user: Annotated[CurrentUser, Depends(get_current_user)],
+        routine_food_id: str,
+        track_service: TrackService = Depends(Provide[Container.track_service]),
+):
+    """
+    routine_food 가져오기
+    """
+    return track_service.get_routine_food_by_id(routine_food_id, current_user.id)
+
+
 @track_router.put("/{track_id}", response_model=TrackUpdateResponse)
 @inject
 def update_track(
@@ -138,6 +165,17 @@ def update_routine(
     return track_service.update_routine(user_id=current_user.id, routine_id=routine_id, body=body)
 
 
+@routine_food_router.put("/{routine_food_id}", response_model=RoutineFoodResponse)
+@inject
+def update_routine_food(
+        current_user: Annotated[CurrentUser, Depends(get_current_user)],
+        routine_food_id: str,
+        body: RoutineFoodRequest,
+        track_service: TrackService = Depends(Provide[Container.track_service]),
+):
+    return track_service.update_routine_food(user_id=current_user.id, routine_food_id=routine_food_id, body=body)
+
+
 @track_router.delete("/{track_id}", response_model=APIResponse)
 @inject
 def delete_track(
@@ -158,6 +196,16 @@ def delete_routine(
 ):
     track_service.delete_routine(user_id=current_user.id, routine_id=routine_id)
     return APIResponse(status_code=status.HTTP_200_OK)
+
+
+@routine_food_router.delete("/{routine_food_id}", response_model=TrackRoutineResponse)
+@inject
+def delete_routine_food(
+        current_user: Annotated[CurrentUser, Depends(get_current_user)],
+        routine_food_id: str,
+        track_service: TrackService = Depends(Provide[Container.track_service]),
+):
+    return track_service.delete_routine_food(user_id=current_user.id, routine_food_id=routine_food_id)
 
 
 @track_router.post("/start/{track_id}", response_model=TrackParticipant)

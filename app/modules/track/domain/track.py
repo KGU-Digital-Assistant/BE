@@ -19,6 +19,7 @@ class TrackRoutine:  # 식단트랙 루틴
     image_url: str = None
 
     track: Optional["Track"] = field(default=None)  # ✅ 기본값 추가
+    routine_foods: Optional[List["RoutineFood"]] = field(default=None)
 
 
 @dataclass
