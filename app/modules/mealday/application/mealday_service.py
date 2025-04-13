@@ -12,9 +12,9 @@ import modules.user.application.user_service
 import requests
 
 from core.fcm import send_fcm_data_noti
-from modules.user.domain.repository.user_repo import IUserRepository
+from modules.user.application.user_service import UserService
 from modules.mealday.domain.repository.mealday_repo import IMealDayRepository
-from modules.track.domain.repository.track_repo import ITrackRepository
+from modules.track.application.track_service import TrackService
 from modules.mealday.domain.mealday import MealDay as MealDayV0
 from modules.track.interface.schema.track_schema import MealTime
 from modules.mealday.interface.schema.mealday_schema import CreateMealDayBody, MealDayResponse_Full, \
@@ -29,13 +29,13 @@ class MealDayService:
     def __init__(
             self,
             mealday_repo: IMealDayRepository,
-            user_repo: IUserRepository,
-            track_repo: ITrackRepository,
+            user_service: UserService,
+            track_service: TrackService,
             crypto: Crypto,
     ):
         self.mealday_repo = mealday_repo
-        self.user_repo = user_repo
-        self.track_repo = track_repo
+        self.user_servcie = user_service
+        self.track_service = track_service
         self.crypto = crypto
 
     def invert_daytime_to_date(self, daytime: str)->date:
@@ -204,13 +204,13 @@ class MealDayService:
     def register_dish_v13(self, user_id: str, daytime: str, trackroutin_ids: List[str]):
         record_date = self.invert_daytime_to_date(daytime)
         for trackroutin_id in trackroutin_ids:
-            trackroutin = self.track_repo.find_routine_by_id(trackroutin_id)
+            trackroutin = self.track_service.track_repo.find_routine_by_id(trackroutin_id)
             if trackroutin is None:
                 raise raise_error(ErrorCode.TRACK_ROUTINE_NOT_FOUND)
             mealday = self.mealday_repo.find_by_date(user_id=user_id,record_date=record_date)
             if mealday is None:
                 raise raise_error(ErrorCode.MEALDAY_NOT_FOUND)
-            trackpart = self.track_repo.find_trackpart_by_user_track_id(user_id=user_id, track_id=mealday.track_id)
+            trackpart = self.track_service.track_repo.find_trackpart_by_user_track_id(user_id=user_id, track_id=mealday.track_id)
             picture_path=None
             if trackroutin.image_url:
                 file_id = self.create_file_name(user_id=user_id)

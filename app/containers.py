@@ -46,8 +46,8 @@ class Container(containers.DeclarativeContainer):
     mealday_service = providers.Factory(
         MealDayService,
         mealday_repo = mealday_repo,
-        user_repo = user_repo,
-        track_repo = track_repo,
+        user_service = user_service,
+        track_service = track_service,
         crypto = crypto
     )
 
