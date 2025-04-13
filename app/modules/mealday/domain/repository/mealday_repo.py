@@ -5,6 +5,7 @@ from typing import List
 from modules.user.domain.user import User as User
 from modules.mealday.domain.mealday import MealDay as MealDay
 from modules.mealday.domain.mealday import Dish as Dish
+from modules.track.domain.track import TrackRoutine as TrackRoutine
 from modules.track.interface.schema.track_schema import MealTime
 
 class IMealDayRepository(metaclass=ABCMeta):
@@ -33,22 +34,20 @@ class IMealDayRepository(metaclass=ABCMeta):
         raise NotImplementedError
 
     ########################################################################
-    ##############MealHour##################################################
+    ##############Dish##################################################
     ########################################################################
 
-    @abstractmethod
-    def find_meal_by_date(self, user_id: str, record_date: date):
-        raise NotImplementedError
-    @abstractmethod
-    def get_all_dishes_by_track_id(self, user_id: str, track_id: str):
-        raise NotImplementedError
+    # @abstractmethod
+    # def get_all_dishes_by_track_id(self, user_id: str, track_id: str):
+    #     raise NotImplementedError
 
     @abstractmethod
-    def create_meal(self, user_id: str, record_date: date, mealtime: MealTime):
+    def create_dish_trackroutin(self, user_id: str, mealday_id: str, trackroutin: TrackRoutine, trackpart_id: str, picture_path: str):
         raise NotImplementedError
-    @abstractmethod
-    def create_dishes(self, user_id: str, meal_id: str,name: List[str], calorie: List[str], picture_path: List[str], mealday_id: str):
-        raise NotImplementedError
+
+    # @abstractmethod
+    # def create_dishes(self, user_id: str, meal_id: str,name: List[str], calorie: List[str], picture_path: List[str], mealday_id: str):
+    #     raise NotImplementedError
 
     @abstractmethod
     def find_dish(self, user_id: str, dish_id: str):

@@ -59,3 +59,7 @@ class ITrackRepository(metaclass=ABCMeta):
     @abstractmethod
     def find_all_routine_by_track_id(self, track_id):
         raise NotImplementedError
+
+    @abstractmethod
+    def find_trackpart_by_user_track_id(self, user_id: str, track_id: str):
+        raise NotImplementedError

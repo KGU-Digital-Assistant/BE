@@ -34,19 +34,21 @@ class Container(containers.DeclarativeContainer):
         crypto=crypto
     )
 
-    mealday_repo = providers.Factory(MealDayRepository)
-    mealday_service = providers.Factory(
-        MealDayService,
-        mealday_repo = mealday_repo,
-        user_repo = user_repo,
-        crypto = crypto
-    )
 
     track_repo = providers.Factory(TrackRepository)
     track_service = providers.Factory(
         TrackService,
         track_repo=track_repo,
         user_service=user_service
+    )
+
+    mealday_repo = providers.Factory(MealDayRepository)
+    mealday_service = providers.Factory(
+        MealDayService,
+        mealday_repo = mealday_repo,
+        user_repo = user_repo,
+        track_repo = track_repo,
+        crypto = crypto
     )
 
     food_repo = providers.Factory(FoodRepository)
