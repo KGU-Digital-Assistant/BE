@@ -97,32 +97,63 @@ async def remove_moose(
 
 dish_router = APIRouter(prefix="/api/v1/dish", tags=["dish"])
 
-@dish_router.get("/get_all_dishes/{track_id}", response_model=List[Dish_with_datetime])
+# @dish_router.get("/get_all_dishes/{track_id}", response_model=List[Dish_with_datetime])
+# @inject
+# def get_all_dishes_by_track_id(
+#         track_id: Annotated[str, Path(description="트랙 id (형식: dasfdsafads)")],
+#         current_user: Annotated[CurrentUser, Depends(get_current_user)],
+#         mealday_service: MealDayService = Depends(Provide[Container.mealday_service])):
+#     return mealday_service.get_all_dishes_by_track_id(current_user.id, track_id)
+
+
+
+# @dish_router.post("/dish/register/{daytime}/{mealtime}", response_model=APIResponse)
+# @inject
+# async def register_dish(
+#     daytime: str = Path(..., description="형식: YYYY-MM-DD"),
+#     mealtime: str = Path(..., description="시간대 (형식: LUNCH)"),
+#     name: List[str] = Form(..., description="음식 이름 리스트"),
+#     calorie: List[float] = Form(..., description="칼로리 리스트"),
+#     picture: List[UploadFile] = File(default=[], description="0개 혹은 갯수맞춰서"),
+#     current_user: CurrentUser = Depends(get_current_user),
+#     mealday_service: MealDayService = Depends(Provide[Container.mealday_service])
+# ):
+#     """
+#     식단시간별(MealHour) 등록 (/dish/upload_temp api로 얻은 data 활용
+#      - 입력예시 : daytime = 2024-06-01, mealtime = LUNCH, name = ["치킨", "피자"], calorie =[100, 200], picture=[사진파일 2개]
+#     """
+#     mealday_service.register_dish(current_user.id, daytime, mealtime, name, calorie, picture)
+#     return APIResponse(status_code=status.HTTP_200_OK, message="Dish Post Success")
+
+@dish_router.post("/dish/register_v13/{daytime}", response_model=APIResponse)
 @inject
-def get_all_dishes_by_track_id(
-        track_id: Annotated[str, Path(description="트랙 id (형식: dasfdsafads)")],
-        current_user: Annotated[CurrentUser, Depends(get_current_user)],
-        mealday_service: MealDayService = Depends(Provide[Container.mealday_service])):
-    return mealday_service.get_all_dishes_by_track_id(current_user.id, track_id)
-
-
-
-@dish_router.post("/dish/register/{daytime}/{mealtime}", response_model=APIResponse)
-@inject
-async def register_dish(
-    daytime: str = Path(..., description="형식: YYYY-MM-DD"),
-    mealtime: str = Path(..., description="시간대 (형식: LUNCH)"),
-    name: List[str] = Form(..., description="음식 이름 리스트"),
-    calorie: List[float] = Form(..., description="칼로리 리스트"),
-    picture: List[UploadFile] = File(default=[], description="0개 혹은 갯수맞춰서"),
+async def register_v13(
+    daytime: str = Path(..., description="2024-06-01"),
+    trackroutin_ids: List[str] = Form(..., description="[트랙루틴id, 루틴id]"),
     current_user: CurrentUser = Depends(get_current_user),
     mealday_service: MealDayService = Depends(Provide[Container.mealday_service])
 ):
     """
-    식단시간별(MealHour) 등록 (/dish/upload_temp api로 얻은 data 활용
-     - 입력예시 : daytime = 2024-06-01, mealtime = LUNCH, name = ["치킨", "피자"], calorie =[100, 200], picture=[사진파일 2개]
+    식단등록 v2(계획된 트랙중 이미지가 없는 트랙의 이미지를 등록하기용
+     - 입력예시 : daytime = 2024-06-01, trackroutin_id = fdasfewaerwq, picture=사진파일1개
     """
-    mealday_service.register_dish(current_user.id, daytime, mealtime, name, calorie, picture)
+    mealday_service.register_dish_v13(current_user.id, daytime, trackroutin_ids)
+    return APIResponse(status_code=status.HTTP_200_OK, message="Dish Post Success")
+
+@dish_router.post("/dish/register_v2/{daytime}/{trackroutin_id}", response_model=APIResponse)
+@inject
+async def register_v2(
+    daytime: str = Path(..., description="2024-06-01"),
+    trackroutin_id: str = Path(..., description="트랙루틴id"),
+    picture: UploadFile = File(..., description="사진1개"),
+    current_user: CurrentUser = Depends(get_current_user),
+    mealday_service: MealDayService = Depends(Provide[Container.mealday_service])
+):
+    """
+    식단등록 v2(계획된 트랙중 이미지가 없는 트랙의 이미지를 등록하기용
+     - 입력예시 : daytime = 2024-06-01, trackroutin_id = fdasfewaerwq, picture=사진파일1개
+    """
+    mealday_service.register_dish_v2(current_user.id, daytime, trackroutin_id, picture)
     return APIResponse(status_code=status.HTTP_200_OK, message="Dish Post Success")
 
 @dish_router.get("/dish/get/{dish_id}", response_model=Dish_Full)

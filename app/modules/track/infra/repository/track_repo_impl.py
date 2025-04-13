@@ -203,3 +203,10 @@ class TrackRepository(ITrackRepository, ABC):
             track.start_date = datetime.now().date() + (start_date - datetime.now().date())
             track.finished_date = datetime.now().date() + timedelta(days=track.duration)
             db.commit()
+
+    def find_trackpart_by_user_track_id(self, user_id: str, track_id: str):
+        with SessionLocal() as db:
+            trackpart = db.query(TrackParticipant).filter(TrackParticipant.user_id == user_id, TrackParticipant.track_id == track_id).first()
+            if trackpart is None:
+                return None
+        return TrackParticipantVO(**row_to_dict(trackpart))
