@@ -73,26 +73,27 @@ class TrackService:
         routine_food_body = []
         calories = 0
 
-        for foods in body.foods:
+        for body_food in body.foods:
+            food = self.food_service.get_food_data(food_label=body_food.food_label)
             routine_food = RoutineFood(
                 id="",
-                track_routine_id="",
-                food_label=foods.food_label,
-                quantity=foods.quantity,
+                routine_id="",
+                food_label=body_food.food_label,
+                quantity=body_food.quantity,
+                food_name=body_food.food_name or food.food_name
             )
             routine_food_body.append(routine_food)
-            food = self.food_service.get_food_data(food_label=foods.food_label)
             calories += (food.calories * routine_food.quantity)
 
         for day in body.days.split(","):
             _day = int(day)
             new_routine = TrackRoutine(
-                    id=str(ULID()),
-                    track_id=track.id,
-                    mealtime=time_parse(body.mealtime),
-                    days=_day,
-                    title=body.title,
-                    calorie=calories,
+                id=str(ULID()),
+                track_id=track.id,
+                mealtime=time_parse(body.mealtime),
+                days=_day,
+                title=body.title,
+                calorie=calories,
             )
 
             new_routine.routine_foods = []
@@ -100,9 +101,10 @@ class TrackService:
                 new_routine.routine_foods.append(
                     RoutineFood(
                         id=str(ULID()),
-                        track_routine_id=new_routine.id,
+                        routine_id=new_routine.id,
                         food_label=food.food_label,
                         quantity=food.quantity,
+                        food_name=food.food_name
                     )
                 )
             routine_list.append(new_routine)
@@ -115,7 +117,7 @@ class TrackService:
         routine = self.validate_routine(routine_id, user_id)
         new_routine_food = RoutineFood(
             id=str(ULID()),
-            track_routine_id=routine.id,
+            routine_id=routine.id,
             food_label=body.food_label,
             quantity=body.quantity,
         )

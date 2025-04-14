@@ -51,8 +51,9 @@ class DateValidator(BaseModel):
 
 class RoutineFoodResponse(BaseModel):
     id: str
-    track_routine_id: str
-    food_label: int
+    routine_id: str
+    food_label: int | None = None
+    food_name: str
     quantity: int
 
 
@@ -69,8 +70,9 @@ class TrackRoutineResponse(BaseModel):
 
 
 class RoutineFoodRequest(BaseModel):
-    food_label: int
+    food_label: int | None = None
     quantity: int
+    food_name: str | None = None
 
 
 class TrackResponse(BaseModel):

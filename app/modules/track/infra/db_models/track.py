@@ -1,8 +1,9 @@
-import datetime
+from datetime import datetime, date, time
 from typing import List
 
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
-from sqlalchemy import Integer, String, Float, Boolean, DateTime, Date, ForeignKey, Enum, Time, Table, Column
+from sqlalchemy import Integer, String, Float, Boolean, DateTime, Date, ForeignKey, Enum, Time, Table, Column, \
+    UniqueConstraint
 
 from database import Base
 import ulid
@@ -28,9 +29,9 @@ class Track(Base):  # 식단트랙
     duration: Mapped[int] = mapped_column(Integer, nullable=False)  # 기간 표현
     delete: Mapped[bool] = mapped_column(Boolean, default=False)  # 트랙 생성자가 삭제 시 다른 사람도 사용 불가
     cheating_count: Mapped[int] = mapped_column(Integer, default=0)
-    create_time: Mapped[datetime.datetime] = mapped_column(DateTime, nullable=False, default=datetime.datetime.utcnow)
-    start_date: Mapped[datetime.date] = mapped_column(Date, nullable=True, default=datetime.date.today)
-    finish_date: Mapped[datetime.date] = mapped_column(Date, nullable=True, default=datetime.date.today)
+    create_time: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=datetime.utcnow)
+    start_date: Mapped[date] = mapped_column(Date, nullable=True, default=date.today)
+    finish_date: Mapped[date] = mapped_column(Date, nullable=True, default=date.today)
     share_count: Mapped[int] = mapped_column(Integer, default=0)
     alone: Mapped[bool] = mapped_column(Boolean, default=True)  # 개인트랙 여부
     daily_calorie: Mapped[float] = mapped_column(Float, default=0)
@@ -50,10 +51,29 @@ class TrackRoutine(Base):  # 식단트랙 루틴
     # weekday: Mapped[int] = mapped_column(Integer, nullable=False)  # 0 ~ 6
     mealtime: Mapped[MealTime] = mapped_column(Enum(MealTime), nullable=False)
     days: Mapped[int] = mapped_column(Integer, nullable=False) # 몇일 차 인지
-    clock: Mapped[datetime.time] = mapped_column(Time, nullable=False, default=lambda: datetime.time(0, 0, 0))
+    clock: Mapped[datetime.time] = mapped_column(Time, nullable=False, default=lambda: time(0, 0, 0))
     image_url: Mapped[str] = mapped_column(String, nullable=True, default=None)
 
     routine_foods: Mapped[list["RoutineFood"]] = relationship(
         back_populates="track_routine", cascade="all, delete-orphan"
     )
     track: Mapped["Track"] = relationship("Track", back_populates="routines")
+
+
+class RoutineCheck:
+    __tablename__ = "RoutineCheck"
+    id: Mapped[str] = mapped_column(String, primary_key=True, nullable=False)
+    user_id: Mapped[str] = mapped_column(
+        String, ForeignKey("User.id", ondelete="CASCADE"), nullable=True
+    )
+    routine_id: Mapped[str] = mapped_column(
+        String, ForeignKey("Routine.id", ondelete="CASCADE"), nullable=True
+    )
+    is_complete: Mapped[bool] = mapped_column(Boolean, default=False)
+    check_time: Mapped[datetime] = mapped_column(
+        DateTime, nullable=False, default=datetime.utcnow
+    )
+
+    __table_args__ = (
+        UniqueConstraint("routine_id", "user_id", name="uq_routine_user_pair"),
+    )
