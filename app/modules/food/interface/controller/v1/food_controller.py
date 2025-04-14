@@ -9,7 +9,7 @@ from modules.food.interface.schema.food_schema import Food_Data
 router = APIRouter(prefix="/api/v1/food", tags=["food"])
 
 
-@router.get("/get/food_data", response_model=List[Food_Data])
+@router.get("/search", response_model=List[Food_Data])
 @inject
 def search_food_data(
     name: str = Query(..., description="조회할 음식명"),
