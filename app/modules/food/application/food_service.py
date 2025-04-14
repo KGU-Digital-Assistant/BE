@@ -11,11 +11,9 @@ class FoodService:
     def __init__(
             self,
             food_repo: IFoodRepository,
-            user_repo: IUserRepository,
             crypto: Crypto,
     ):
         self.food_repo = food_repo
-        self.user_repo = user_repo
         self.crypto = crypto
 
     def search_food_data(self, name: str):

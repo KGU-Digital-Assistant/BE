@@ -3,6 +3,8 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from database import Base
 from sqlalchemy import Integer, String, Float, Boolean, DateTime, Date, ForeignKey, Enum, Time
 
+from modules.track.interface.schema.track_schema import FlagStatus
+
 
 class TrackParticipant(Base):
     __tablename__ = "TrackParticipant"
@@ -21,4 +23,4 @@ class TrackParticipant(Base):
         unique=True
     )
     joined_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=datetime.utcnow)
-    finished: Mapped[bool] = mapped_column(Boolean, default=False)
+    status: Mapped[FlagStatus] = mapped_column(Enum(FlagStatus, create_type=True), default=FlagStatus.READY, nullable=False)

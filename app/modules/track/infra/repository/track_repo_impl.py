@@ -44,7 +44,7 @@ class TrackRepository(ITrackRepository, ABC):
                 for routine_food in routine.routine_foods:
                     new_routine_food = RoutineFood(
                         id=routine_food.id,
-                        track_routine_id=routine_food.track_routine_id,
+                        track_routine_id=routine_food.routine_id,
                         food_label=routine_food.food_label,
                         quantity=routine_food.quantity,
                     )
@@ -78,7 +78,7 @@ class TrackRepository(ITrackRepository, ABC):
         with SessionLocal() as db:
             routine_food = RoutineFood(
                 id=routine_food_vo.id,
-                track_routine_id=routine_food_vo.track_routine_id,
+                track_routine_id=routine_food_vo.routine_id,
                 food_label=routine_food_vo.food_label,
                 quantity=routine_food_vo.quantity,
             )
