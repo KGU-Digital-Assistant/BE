@@ -210,7 +210,7 @@ class MealDayService:
             mealday = self.mealday_repo.find_by_date(user_id=user_id,record_date=record_date)
             if mealday is None:
                 raise raise_error(ErrorCode.MEALDAY_NOT_FOUND)
-            trackpart = self.track_service.track_repo.find_trackpart_by_user_track_id(user_id=user_id, track_id=mealday.track_id)
+            trackpart = self.track_service.track_repo.find_track_part_by_user_track_id(user_id=user_id, track_id=mealday.track_id)
             picture_path=None
             if trackroutin.image_url:
                 file_id = self.create_file_name(user_id=user_id)
@@ -231,7 +231,7 @@ class MealDayService:
         mealday = self.mealday_repo.find_by_date(user_id=user_id,record_date=record_date)
         if mealday is None:
             raise raise_error(ErrorCode.MEALDAY_NOT_FOUND)
-        trackpart = self.track_repo.find_trackpart_by_user_track_id(user_id=user_id, track_id=mealday.track_id)
+        trackpart = self.track_repo.find_track_part_by_user_track_id(user_id=user_id, track_id=mealday.track_id)
         file_id = self.create_file_name(user_id=user_id)
         blob = bucket.blob(f"meal/{file_id}")
         blob.upload_from_file(picture.file, content_type=picture.content_type)

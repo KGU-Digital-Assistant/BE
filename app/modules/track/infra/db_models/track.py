@@ -60,14 +60,14 @@ class TrackRoutine(Base):  # 식단트랙 루틴
     track: Mapped["Track"] = relationship("Track", back_populates="routines")
 
 
-class RoutineCheck:
+class RoutineCheck(Base):
     __tablename__ = "RoutineCheck"
     id: Mapped[str] = mapped_column(String, primary_key=True, nullable=False)
     user_id: Mapped[str] = mapped_column(
         String, ForeignKey("User.id", ondelete="CASCADE"), nullable=True
     )
     routine_id: Mapped[str] = mapped_column(
-        String, ForeignKey("Routine.id", ondelete="CASCADE"), nullable=True
+        String, ForeignKey("TrackRoutine.id", ondelete="CASCADE"), nullable=True
     )
     is_complete: Mapped[bool] = mapped_column(Boolean, default=False)
     check_time: Mapped[datetime] = mapped_column(

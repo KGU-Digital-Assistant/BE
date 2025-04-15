@@ -13,7 +13,7 @@ class MealTime(Enum):
     LUNCH = 'LUNCH'
     LINNER = 'LINNER'  #점저
     DINNER = 'DINNER'
-    SNACK = 'SNACK' # 간식
+    SNACK = 'SNACK'  # 간식
 
 
 class FlagStatus(Enum):
@@ -57,6 +57,10 @@ class RoutineFoodResponse(BaseModel):
     quantity: int
 
 
+class RoutineFoodGroupResponse(RoutineFoodResponse):
+    is_clear: bool
+
+
 class TrackRoutineResponse(BaseModel):
     id: str
     track_id: str
@@ -69,10 +73,15 @@ class TrackRoutineResponse(BaseModel):
     routine_foods: Optional[List[RoutineFoodResponse]]
 
 
+class RoutineGroupResponse(TrackRoutineResponse):
+    is_clear: bool = False
+    routine_foods: Optional[List[RoutineFoodGroupResponse]]
+
+
 class RoutineFoodRequest(BaseModel):
-    food_label: int | None = None
+    food_label: Optional[int] = None
     quantity: int
-    food_name: str | None = None
+    food_name: Optional[str] = None
 
 
 class TrackResponse(BaseModel):
@@ -136,7 +145,7 @@ class TrackUpdateResponse(CreateTrackBody):
     finish_date: datetime
 
 
-class TrackParticipant(BaseModel):
+class TrackParticipantResponse(BaseModel):
     id: str
     user_id: str
     track_id: str
@@ -159,3 +168,11 @@ class TrackRoutineList(BaseModel):
     calorie: int
     date: int
     mealtime: MealTime
+
+
+class RoutineCheckResponse(BaseModel):
+    id: str
+    routine_id: str
+    user_id: str
+    is_complete: bool
+    check_time: datetime

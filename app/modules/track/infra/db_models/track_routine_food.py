@@ -44,6 +44,9 @@ class RoutineFoodCheck(Base):
     dish_id: Mapped[str] = mapped_column(
         ForeignKey("Dish.id", ondelete="CASCADE"), nullable=False
     )
+    user_id: Mapped[str] = mapped_column(
+        ForeignKey("User.id", ondelete="CASCADE"), nullable=False
+    )
     is_complete: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     check_time: Mapped[datetime] = mapped_column(
         DateTime, nullable=False, default=datetime.utcnow

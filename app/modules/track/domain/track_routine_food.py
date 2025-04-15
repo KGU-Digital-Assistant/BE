@@ -1,3 +1,4 @@
+import datetime
 from dataclasses import dataclass, field
 from typing import Optional
 
@@ -12,3 +13,13 @@ class RoutineFood:
 
     track_routine: Optional["TrackRoutine"] = field(default=None)
     food: Optional["Food"] = field(default=None)
+
+
+@dataclass
+class RoutineFoodCheck:
+    id: str
+    routine_food_id: str
+    dish_id: str
+    user_id: str
+    is_complete: bool
+    check_time: datetime.time

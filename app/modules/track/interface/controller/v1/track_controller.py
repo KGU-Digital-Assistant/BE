@@ -11,7 +11,8 @@ from modules.track.application import track_service
 from modules.track.application.track_service import TrackService
 from modules.track.interface.schema.track_schema import CreateTrackBody, TrackResponse, CreateTrackRoutineBody, \
     TrackRoutineResponse, UpdateTrackBody, UpdateRoutineBody, \
-    TrackUpdateResponse, TrackParticipant, TrackStartBody, RoutineFoodResponse, RoutineFoodRequest
+    TrackUpdateResponse, TrackParticipantResponse, TrackStartBody, RoutineFoodResponse, RoutineFoodRequest, \
+    RoutineGroupResponse, RoutineCheckResponse
 from utils.responses.response import APIResponse
 
 track_router = APIRouter(prefix="/api/v1/track", tags=["track"])
@@ -74,6 +75,19 @@ def create_routine_food(
     return track_service.create_routine_food(routine_id, body, current_user.id)
 
 
+@routine_router.post("/check_table/{routine_id}", response_model=RoutineCheckResponse)
+@inject
+def create_routine_check(
+        routine_id: str,
+        current_user: Annotated[CurrentUser, Depends(get_current_user)],
+        track_service: TrackService = Depends(Provide[Container.track_service]),
+):
+    """
+    ### RoutineCheck 테이블 생성 API
+    """
+    return track_service.create_routine_check(routine_id, current_user.id)
+
+
 @track_router.get("/{track_id}", response_model=TrackResponse)
 @inject
 def get_track(
@@ -87,7 +101,7 @@ def get_track(
     return track_service.get_track_by_id(track_id=track_id, user_id=current_user.id)
 
 
-@routine_router.get("/day/group/{track_id}", response_model=List[List[TrackRoutineResponse]])
+@routine_router.get("/day/group/{track_id}", response_model=List[List[RoutineGroupResponse]])
 @inject
 def get_routine_list(
         current_user: Annotated[CurrentUser, Depends(get_current_user)],
@@ -123,7 +137,7 @@ def get_tracks(
         track_service: TrackService = Depends(Provide[Container.track_service]),
 ):
     """
-    track 전체 가져오기
+    track 전체 가져 오기
     """
     return track_service.get_tracks(user_id=current_user.id)
 
@@ -209,7 +223,10 @@ def delete_routine_food(
     return track_service.delete_routine_food(user_id=current_user.id, routine_food_id=routine_food_id)
 
 
-@track_router.post("/start/{track_id}", response_model=TrackParticipant)
+# @routine_food_router.
+
+
+@track_router.post("/start/{track_id}", response_model=TrackParticipantResponse)
 @inject
 def start_track(
         current_user: Annotated[CurrentUser, Depends(get_current_user)],
@@ -221,3 +238,16 @@ def start_track(
     트랙 시작 하기
     """
     return track_service.track_start(user_id=current_user.id, track_id=track_id, body=body)
+
+
+@track_router.put("/termination/{track_id}", response_model=TrackParticipantResponse)
+@inject
+def terminate_track(
+        current_user: Annotated[CurrentUser, Depends(get_current_user)],
+        track_id: str,
+        track_service: TrackService = Depends(Provide[Container.track_service]),
+):
+    """
+    트랙 중단 하기
+    """
+    return track_service.track_terminate(user_id=current_user.id, track_id=track_id)
