@@ -1,6 +1,6 @@
 from dataclasses import dataclass, field
 from typing import Optional
-
+from datetime import datetime
 
 @dataclass
 class RoutineFood:
@@ -12,3 +12,12 @@ class RoutineFood:
 
     track_routine: Optional["TrackRoutine"] = field(default=None)
     food: Optional["Food"] = field(default=None)
+
+@dataclass
+class RoutinFoodCheck:
+    id: str
+    routin_food_id: str
+    dish_id: str
+    user_id: str
+    is_complete: bool = field(default=False)
+    check_time: datetime = field(default=datetime.utcnow())

@@ -83,7 +83,7 @@ class TrackService:
                 food_name=body_food.food_name or food.food_name
             )
             routine_food_body.append(routine_food)
-            calories += (food.calories * routine_food.quantity)
+            calories += (food.calorie * routine_food.quantity)
 
         for day in body.days.split(","):
             _day = int(day)

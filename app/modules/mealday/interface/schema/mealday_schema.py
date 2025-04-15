@@ -61,7 +61,7 @@ class UpdateMealDayBody(BaseModel):
     alcohol: Optional[float] = None
 
 ########################################################################
-############## Dish & Meal ##################################################
+############## Dish ##################################################
 ########################################################################
 
 
@@ -74,7 +74,9 @@ class UpdateDishBody(BaseModel):
 class Dish_Full(BaseModel):
     id: str
     user_id: str
-    meal_id: str
+    mealday_id: str
+    mealtime: MealTime
+    days: Optional[int] = None
     name: Optional[str] = None
     picture: Optional[str] = None
     text: Optional[str] = None
@@ -97,3 +99,10 @@ class Dish_with_datetime(BaseModel):
     record_date: date
     mealtime: MealTime
     dish_list: List[Dish_Full]
+
+class CreateDishBody(BaseModel):
+    mealtime: str
+    days: int
+    name: Optional[str] = None
+    picture: Optional[str] = None
+    label: Optional[int] = None
