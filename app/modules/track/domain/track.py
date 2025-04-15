@@ -23,6 +23,18 @@ class TrackRoutine:  # 식단트랙 루틴
 
 
 @dataclass
+class RoutineCheck:
+    id: str
+    routine_id: str
+    user_id: str
+    is_complete: bool
+    check_time: datetime = field(default_factory=lambda: datetime.datetime.now())
+
+    # routine: Optional["Routine"] = field(default=None)
+    # user: Optional["User"] = field(default=None)
+
+
+@dataclass
 class Track:  # 식단트랙
     id: str
     user_id: str
