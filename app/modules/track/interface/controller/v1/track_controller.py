@@ -39,8 +39,8 @@ def create_routine(
         track_service: TrackService = Depends(Provide[Container.track_service]),
 ):
     """
-    - mealtime 입력: 아침, 점심, 저녁 ....
-    - days 입력: 4, 2, 6, 8, 14 -> 4일 2일 6일 8일 14일 반복
+    - mealtime 입력: 아침 or 점심 or 저녁 ....
+    - days 입력: 4,2,6,8,14 -> 4일 2일 6일 8일 14일 반복
     - food_name: food_label이 없는 음식일때 작성해야함.
     """
     routine = track_service.create_routine(current_user.id, body)

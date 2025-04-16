@@ -214,8 +214,10 @@ class TrackService:
 
         for routine in track.routines:
             clear_routine = self.track_repo.find_routine_check(routine.id, user_id)
-            if clear_routine is None:
-                raise_error(ErrorCode.TRACK_ROUTINE_NOT_FOUND)
+            status = False
+            if clear_routine is not None:
+                print(clear_routine)
+                status = clear_routine.is_complete
             _day = int(routine.days)
 
             days_grouped[_day].append(
@@ -229,7 +231,7 @@ class TrackService:
                     clock=routine.clock,
                     delete=routine.delete,
                     routine_foods=self.routine_food_check_list(routine.id, routine.routine_foods, clear_routine),
-                    is_complete=clear_routine.is_complete,
+                    is_clear=status,
                 )
             )
         idx = 0

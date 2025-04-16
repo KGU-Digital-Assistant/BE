@@ -287,7 +287,6 @@ class TrackRepository(ITrackRepository, ABC):
             if clear_routine is None:
                 return None
             return RoutineCheckVO(**row_to_dict(clear_routine))
-            
 
     def find_routin_food_all_by_trackroutin_id(self, trackroutin_id: str):
         with SessionLocal() as db:
@@ -318,7 +317,8 @@ class TrackRepository(ITrackRepository, ABC):
 
     def update_routin_check(self, user_id: str, routin_id: str):
         with SessionLocal() as db:
-            routin_check=db.query(RoutineCheck).filter(RoutineCheck.user_id==user_id,RoutineCheck.routine_id==routin_id).first()
+            routin_check = db.query(RoutineCheck).filter(RoutineCheck.user_id == user_id,
+                                                         RoutineCheck.routine_id == routin_id).first()
             if routin_check is None:
                 return None
             routin_check.is_complete = True
@@ -330,9 +330,8 @@ class TrackRepository(ITrackRepository, ABC):
     def find_routine_food_with_food_by_id(self, routine_food_id: str):
         with SessionLocal() as db:
             routine_food = db.query(RoutineFood).options(
-                    joinedload(RoutineFood.food)
-                ).filter(RoutineFood.id == routine_food_id).first()
+                joinedload(RoutineFood.food)
+            ).filter(RoutineFood.id == routine_food_id).first()
             if routine_food is None:
                 return None
             return RoutineFoodVO(**row_to_dict(routine_food))
-

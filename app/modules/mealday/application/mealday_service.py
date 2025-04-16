@@ -191,7 +191,7 @@ class MealDayService:
                 if rf.food_label is not None and rf.food is not None:
                     file_id = self.create_file_name(user_id=user_id)
                     dish_path = f"meal/{file_id}"
-                    food_blob = bucket.blob(rf.food.picture)
+                    food_blob = bucket.blob(rf.food.image_url)
                     dish_blob = bucket.blob(dish_path)
                     bucket.copy_blob(food_blob, bucket, dish_blob.name)
                     picture_path = dish_blob.name
@@ -248,7 +248,7 @@ class MealDayService:
             if routine_food.food_label is not None and routine_food.food is not None:
                 file_id = self.create_file_name(user_id=user_id)
                 dish_path = f"meal/{file_id}"
-                food_blob = bucket.blob(routine_food.food.picture)
+                food_blob = bucket.blob(routine_food.food.image_url)
                 dish_blob = bucket.blob(dish_path)
                 bucket.copy_blob(food_blob, bucket, dish_blob.name)
                 picture_path = dish_blob.name
@@ -282,14 +282,14 @@ class MealDayService:
         dish = self.mealday_repo.find_dish(user_id= user_id, dish_id= dish_id)
         if dish is None:
             raise raise_error(ErrorCode.DISH_NOT_FOUND)
-        if dish.picture and dish.picture is not None:
+        if dish.image_url and dish.image_url is not None:
             try:
                 # 서명된 URL 생성 (URL은 1시간 동안 유효)
-                blob = bucket.blob(dish.picture)
+                blob = bucket.blob(dish.image_url)
                 signed_url = blob.generate_signed_url(expiration=timedelta(hours=1))
             except Exception:
                 raise raise_error(ErrorCode.DISH_NOT_FOUND)
-            dish.picture = signed_url
+            dish.image_url = signed_url
         return dish
 
     def remove_dish(self, user_id: str, dish_id: str):

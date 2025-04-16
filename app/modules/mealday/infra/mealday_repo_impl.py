@@ -198,7 +198,7 @@ class MealDayRepository(IMealDayRepository, ABC):
             mealday.fat -= dish.fat
             mealday.nowcalorie -= dish.calorie
             mealday.update_datetime = datetime.utcnow()
-            picture_path=dish.picture
+            picture_path=dish.image_url
             db.delete(dish)
             db.commit()
             return picture_path
