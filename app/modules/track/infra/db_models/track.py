@@ -62,6 +62,7 @@ class TrackRoutine(Base):  # 식단트랙 루틴
 
 class RoutineCheck(Base):
     __tablename__ = "RoutineCheck"
+
     id: Mapped[str] = mapped_column(String, primary_key=True, nullable=False)
     user_id: Mapped[str] = mapped_column(
         String, ForeignKey("User.id", ondelete="CASCADE"), nullable=True

@@ -41,9 +41,9 @@ class Track:  # 식단트랙
     name: str = field(default="새로운 식단 트랙")
     icon: Optional[str] = None
     origin_track_id: Optional[str] = None
-    water: float = field(default=0.0)
-    coffee: float = field(default=0.0)
-    alcohol: float = field(default=0.0)
+    #water: float = field(default=0.0)
+    #coffee: float = field(default=0.0)
+    #alcohol: float = field(default=0.0)
     duration: int = field(default=0)
     delete: bool = field(default=False)
     cheating_count: int = field(default=0)

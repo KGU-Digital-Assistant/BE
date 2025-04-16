@@ -10,14 +10,16 @@ from core.fcm import bucket
 
 import modules.user.application.user_service
 import requests
+from utils.parser import weekday_parse, time_parse, mealtime_parse
 
 from core.fcm import send_fcm_data_noti
 from modules.user.application.user_service import UserService
 from modules.mealday.domain.repository.mealday_repo import IMealDayRepository
 from modules.track.application.track_service import TrackService
+from modules.food.application.food_service import FoodService
 from modules.mealday.domain.mealday import MealDay as MealDayV0
 from modules.track.interface.schema.track_schema import MealTime
-from modules.mealday.interface.schema.mealday_schema import CreateMealDayBody, MealDayResponse_Full, \
+from modules.mealday.interface.schema.mealday_schema import CreateDishBody, MealDayResponse_Full, \
     UpdateMealDayBody, UpdateDishBody
 from utils.crypto import Crypto
 from utils.db_utils import orm_to_pydantic, dataclass_to_pydantic
@@ -31,11 +33,13 @@ class MealDayService:
             mealday_repo: IMealDayRepository,
             user_service: UserService,
             track_service: TrackService,
+            food_service: FoodService,
             crypto: Crypto,
     ):
         self.mealday_repo = mealday_repo
         self.user_servcie = user_service
         self.track_service = track_service
+        self.food_service = food_service
         self.crypto = crypto
 
     def invert_daytime_to_date(self, daytime: str)->date:
@@ -88,33 +92,19 @@ class MealDayService:
 
         return dataclass_to_pydantic(self.mealday_repo.save_mealday(new_mealday), MealDayResponse_Full)
 
-    def create_mealday_by_month(self, user_id: str, year: int, month: int):
-        try:
-            # 주어진 월의 첫날과 마지막 날을 구합니다.
-            first_day = datetime(year, month, 1).date()
-            last_day = datetime(year, month, monthrange(year, month)[1]).date()
-        except ValueError:
-            raise ErrorCode.INVALID_FORMAT
-
-        count = self.mealday_repo.save_many_mealday(user_id, first_day = first_day, last_day = last_day)
-        return count
-
     def create_mealday_by_track_id(self, user_id: str, track_id: str):
-        count = self.mealday_repo.save_many_mealday_by_track_id(user_id = user_id, track_id = track_id)
+        track = self.track_service.track_repo.find_by_id(track_id=track_id)
+        if track is None:
+            raise raise_error(ErrorCode.TRACK_NOT_FOUND)
+        count = self.mealday_repo.save_many_mealday(user_id = user_id, track_id=track_id, first_day=track.start_date, last_day = track.finish_date)
         return count
 
-    def find_mealday_by_date(self, user_id: str, record_date: date):
+    def find_mealday_by_date(self, user_id: str, daytime: str):
+        record_date = self.invert_daytime_to_date(daytime)
         mealday = self.mealday_repo.find_by_date(user_id=user_id, record_date=record_date)
         if mealday is None:
             raise raise_error(ErrorCode.MEALDAY_NOT_FOUND)
         return mealday
-
-    def find_mealday_by_date(self, user_id: str, record_date: date):
-        mealday = self.mealday_repo.find_by_date(user_id=user_id, record_date=record_date)
-        if mealday is None:
-            raise raise_error(ErrorCode.MEALDAY_NOT_FOUND)
-        return mealday
-
 
     def apply_update_mealday(self, mealday, body: UpdateMealDayBody):
         """사용자 정보 업데이트 적용"""
@@ -123,6 +113,7 @@ class MealDayService:
         if body.water: mealday.water = body.water
         if body.coffee: mealday.coffee = body.coffee
         if body.alcohol: mealday.alcohol = body.alcohol
+
     def update_mealday(self, user_id: str, daytime: str, body: UpdateMealDayBody):
         record_date = self.invert_daytime_to_date(daytime)
         mealday = self.mealday_repo.find_by_date(user_id=user_id, record_date=record_date)
@@ -132,7 +123,7 @@ class MealDayService:
         return self.mealday_repo.update_mealday(mealday)
 
 ########################################################################
-##############mDISH ##################################################
+############## 무스 ##################################################
 ########################################################################
 
     def create_file_name(self, user_id: str):
@@ -178,66 +169,113 @@ class MealDayService:
             return {"detail": "Temporary file removed"}
         return {"detail": "No Temporary file here"}
 
-    # def register_dish(self, user_id: str, daytime: str, mealtime: MealTime,
-    #                   name: List[str], calorie: List[float], picture: List[UploadFile] = File(...)):
-    #     record_date = self.invert_daytime_to_date(daytime)
-    #     meal = self.mealday_repo.find_meal_by_date(user_id=user_id,record_date=record_date, mealtime=mealtime)
-    #     if meal is None:
-    #         meal = self.mealday_repo.create_meal(user_id=user_id, record_date=record_date, mealtime=mealtime)
-    #
-    #     picture_pathes=[]
-    #     for i in range(len(name)):
-    #         # 파일이 있으면 firebase 업로드 처리, 없으면 None
-    #         if picture and i < len(picture) and picture[i] is not None:
-    #             file = picture[i]
-    #             file_id = self.create_file_name(user_id=user_id)
-    #             blob = bucket.blob(f"meal/{file_id}")
-    #             blob.upload_from_file(file.file, content_type=file.content_type)
-    #             picture_path = blob.name
-    #         else:
-    #             picture_path = "default"
-    #         picture_pathes.append(picture_path)
-    #
-    #     self.mealday_repo.create_dishes(user_id=user_id, meal_id=meal.id,name=name, calorie=calorie, picture_path=picture_pathes, mealday_id =meal.mealday_id)
+########################################################################
+############## Dish ##################################################
+########################################################################
 
-
-    def register_dish_v13(self, user_id: str, daytime: str, trackroutin_ids: List[str]):
+    def register_dish_v1(self, user_id: str, daytime: str, trackroutin_id: str):
         record_date = self.invert_daytime_to_date(daytime)
-        for trackroutin_id in trackroutin_ids:
-            trackroutin = self.track_service.track_repo.find_routine_by_id(trackroutin_id)
-            if trackroutin is None:
-                raise raise_error(ErrorCode.TRACK_ROUTINE_NOT_FOUND)
-            mealday = self.mealday_repo.find_by_date(user_id=user_id,record_date=record_date)
-            if mealday is None:
-                raise raise_error(ErrorCode.MEALDAY_NOT_FOUND)
-            trackpart = self.track_service.track_repo.find_track_part_by_user_track_id(user_id=user_id, track_id=mealday.track_id)
-            picture_path=None
-            if trackroutin.image_url:
-                file_id = self.create_file_name(user_id=user_id)
-                dish_path = f"meal/{file_id}"
-                track_blob = bucket.blob(trackroutin.image_url)
-                dish_blob = bucket.blob(dish_path)
-                bucket.copy_blob(track_blob, bucket, dish_blob.name)
-                picture_path = dish_blob.name
-            self.mealday_repo.create_dish_trackroutin(user_id=user_id, mealday_id=mealday.id,
-                                                  trackpart_id=trackpart.id, trackroutin=trackroutin,
-                                                  picture_path=picture_path)
+        trackroutin_foods = self.track_service.track_repo.find_routin_food_all_by_trackroutin_id(trackroutin_id=trackroutin_id)
+        if trackroutin_foods is None:
+            raise raise_error(ErrorCode.TRACK_ROUTINE_NOT_FOUND)
+        mealday = self.mealday_repo.find_by_date(user_id=user_id,record_date=record_date)
+        if mealday is None:
+            raise raise_error(ErrorCode.MEALDAY_NOT_FOUND)
+        trackpart = self.track_service.track_repo.find_track_part_by_user_track_id(user_id=user_id, track_id=mealday.track_id)
+        if trackpart is None:
+            raise raise_error(ErrorCode.TRACK_PARTICIPATION_NOT_FOUNT)
+        for trackroutin in trackroutin_foods:
+            for rf in trackroutin.routine_foods:
+                picture_path = None
+                label = rf.food_label if rf.food_label is not None else None
+                if rf.food_label is not None and rf.food is not None:
+                    file_id = self.create_file_name(user_id=user_id)
+                    dish_path = f"meal/{file_id}"
+                    food_blob = bucket.blob(rf.food.picture)
+                    dish_blob = bucket.blob(dish_path)
+                    bucket.copy_blob(food_blob, bucket, dish_blob.name)
+                    picture_path = dish_blob.name
+                dish = self.mealday_repo.create_dish_trackroutin(user_id=user_id, mealday_id=mealday.id, trackroutin=trackroutin,
+                    trackpart_id=trackpart.id, picture_path=picture_path, food=rf.food, label=label, name=rf.food_name)
+                self.track_service.track_repo.create_routin_food_check(routine_food_id=rf.id, dish_id=dish.id, user_id=user_id)
+                routincheck = self.track_service.track_repo.update_routin_check(user_id=user_id,routin_id=trackroutin_id)
+                if routincheck is None:
+                    raise raise_error(ErrorCode.ROUTINECHECK_NOT_FOUND)
 
-    def register_dish_v2(self, user_id: str, daytime: str, trackroutin_id: str, picture: UploadFile = File(...)):
+    def register_dish_v2(self, user_id: str, daytime: str, routine_food_id: str, picture: UploadFile = File(...)):
         record_date = self.invert_daytime_to_date(daytime)
-        trackroutin = self.track_repo.find_routine_by_id(trackroutin_id)
+        routin_food = self.track_service.track_repo.find_routine_food_by_id(routine_food_id=routine_food_id)
+        if routin_food is None:
+            raise raise_error(ErrorCode.NO_FOOD)
+        trackroutin = self.track_service.track_repo.find_routine_by_id(routine_id=routin_food.routine_id)
         if trackroutin is None:
             raise raise_error(ErrorCode.TRACK_ROUTINE_NOT_FOUND)
         mealday = self.mealday_repo.find_by_date(user_id=user_id,record_date=record_date)
         if mealday is None:
             raise raise_error(ErrorCode.MEALDAY_NOT_FOUND)
-        trackpart = self.track_repo.find_track_part_by_user_track_id(user_id=user_id, track_id=mealday.track_id)
+
+        trackpart = self.track_service.track_repo.find_track_part_by_user_track_id(user_id=user_id, track_id=mealday.track_id)
+        if trackpart is None:
+            raise raise_error(ErrorCode.TRACK_PARTICIPATION_NOT_FOUNT)
         file_id = self.create_file_name(user_id=user_id)
         blob = bucket.blob(f"meal/{file_id}")
         blob.upload_from_file(picture.file, content_type=picture.content_type)
         picture_path = blob.name
-        self.mealday_repo.create_dish_trackroutin(user_id=user_id, mealday_id=mealday.id,
-                                                  trackpart_id=trackpart.id, trackroutin=trackroutin, picture_path=picture_path)
+        dish = self.mealday_repo.create_dish_trackroutin(user_id=user_id, mealday_id=mealday.id, trackroutin=trackroutin,
+            trackpart_id=trackpart.id, picture_path=picture_path, food=None, label=None, name=routin_food.food_name)
+        self.track_service.track_repo.create_routin_food_check(routine_food_id=routine_food_id, dish_id=dish.id, user_id=user_id)
+        routincheck = self.track_service.track_repo.update_routin_check(user_id=user_id,routin_id=trackroutin.id)
+        if routincheck is None:
+            raise raise_error(ErrorCode.ROUTINECHECK_NOT_FOUND)
+
+    def register_dish_v3(self, user_id: str, daytime: str, routine_food_ids: List[str]):
+        record_date = self.invert_daytime_to_date(daytime)
+        mealday = self.mealday_repo.find_by_date(user_id=user_id,record_date=record_date)
+        if mealday is None:
+            raise raise_error(ErrorCode.MEALDAY_NOT_FOUND)
+        trackpart = self.track_service.track_repo.find_track_part_by_user_track_id(user_id=user_id, track_id=mealday.track_id)
+        if trackpart is None:
+            raise raise_error(ErrorCode.TRACK_PARTICIPATION_NOT_FOUNT)
+        for routine_food_id in routine_food_ids:
+            routine_food = self.track_service.track_repo.find_routine_food_with_food_by_id(routine_food_id=routine_food_id)
+            if routine_food is None:
+                raise raise_error(ErrorCode.TRACK_ROUTINE_FOOD_NOT_FOUND)
+            trackroutin = self.track_service.track_repo.find_routine_by_id(routine_id=routine_food.routine_id)
+            if trackroutin is None:
+                raise raise_error(ErrorCode.TRACK_ROUTINE_NOT_FOUND)
+            picture_path = None
+            label = routine_food.food_label if routine_food.food_label is not None else None
+            if routine_food.food_label is not None and routine_food.food is not None:
+                file_id = self.create_file_name(user_id=user_id)
+                dish_path = f"meal/{file_id}"
+                food_blob = bucket.blob(routine_food.food.picture)
+                dish_blob = bucket.blob(dish_path)
+                bucket.copy_blob(food_blob, bucket, dish_blob.name)
+                picture_path = dish_blob.name
+            dish = self.mealday_repo.create_dish_trackroutin(user_id=user_id, mealday_id=mealday.id, trackroutin=trackroutin,
+                trackpart_id=trackpart.id, picture_path=picture_path,food=routine_food.food,label=label,name=routine_food.food_name)
+            self.track_service.track_repo.create_routin_food_check(routine_food_id=routine_food.id, dish_id=dish.id,
+                                                                           user_id=user_id)
+            routincheck = self.track_service.track_repo.update_routin_check(user_id=user_id,routin_id=trackroutin.id)
+            if routincheck is None:
+                raise raise_error(ErrorCode.ROUTINECHECK_NOT_FOUND)
+
+    def register_dish_v4(self, user_id: str, daytime: str, body: CreateDishBody):
+        record_date = self.invert_daytime_to_date(daytime)
+        mealday = self.mealday_repo.find_by_date(user_id=user_id,record_date=record_date)
+        if mealday is None:
+            raise raise_error(ErrorCode.MEALDAY_NOT_FOUND)
+        trackpart = self.track_service.track_repo.find_track_part_by_user_track_id(user_id=user_id, track_id=mealday.track_id)
+        if trackpart is None:
+            raise raise_error(ErrorCode.TRACK_PARTICIPATION_NOT_FOUNT)
+        food = None
+        if body.label is not None:
+            food = self.food_service.get_food_data(food_label=body.label)
+            if food is None:
+                raise raise_error(ErrorCode.NO_FOOD)
+        mealtime = time_parse(body.mealtime)
+        self.mealday_repo.create_dish(user_id=user_id, mealday_id=mealday.id, body=body,
+            trackpart_id=trackpart.id, mealtime = mealtime,food = food)
 
 
     def find_dish(self, user_id: str, dish_id: str):
@@ -287,3 +325,27 @@ class MealDayService:
             raise raise_error(ErrorCode.DISH_NOT_FOUND)
         percent = self.apply_update_dish(dish, body) ## 1이면 size변경, 0이면 size변경 X
         return self.mealday_repo.update_dish(dish, percent)
+
+    # def register_dish(self, user_id: str, daytime: str, mealtime: MealTime,
+    #                   name: List[str], calorie: List[float], picture: List[UploadFile] = File(...)):
+    #     record_date = self.invert_daytime_to_date(daytime)
+    #     meal = self.mealday_repo.find_meal_by_date(user_id=user_id,record_date=record_date, mealtime=mealtime)
+    #     if meal is None:
+    #         meal = self.mealday_repo.create_meal(user_id=user_id, record_date=record_date, mealtime=mealtime)
+    #
+    #     picture_pathes=[]
+    #     for i in range(len(name)):
+    #         # 파일이 있으면 firebase 업로드 처리, 없으면 None
+    #         if picture and i < len(picture) and picture[i] is not None:
+    #             file = picture[i]
+    #             file_id = self.create_file_name(user_id=user_id)
+    #             blob = bucket.blob(f"meal/{file_id}")
+    #             blob.upload_from_file(file.file, content_type=file.content_type)
+    #             picture_path = blob.name
+    #         else:
+    #             picture_path = "default"
+    #         picture_pathes.append(picture_path)
+    #
+    #     self.mealday_repo.create_dishes(user_id=user_id, meal_id=meal.id,name=name, calorie=calorie, picture_path=picture_pathes, mealday_id =meal.mealday_id)
+
+

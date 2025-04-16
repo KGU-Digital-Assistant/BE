@@ -15,7 +15,7 @@ class RoutineFood(Base):
         ForeignKey("TrackRoutine.id", ondelete="CASCADE"), nullable=False,
     )
     food_label: Mapped[int] = mapped_column(
-        ForeignKey("Food.label", ondelete="CASCADE"), nullable=False,
+        ForeignKey("Food.label", ondelete="CASCADE"), nullable=True, ### label없는게 이미지없는text로만 저장한거
     )
     quantity: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
     food_name: Mapped[str] = mapped_column(String, nullable=False)
@@ -55,4 +55,3 @@ class RoutineFoodCheck(Base):
     __table_args__ = (
         UniqueConstraint("routine_food_id", "dish_id", name="uq_routine_dish_pair"),
     )
-

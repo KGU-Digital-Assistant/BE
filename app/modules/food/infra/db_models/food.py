@@ -24,6 +24,7 @@ class Food(Base):
     zinc: Mapped[float] = mapped_column(Float, nullable=True, default=0.0)
     cholesterol: Mapped[float] = mapped_column(Float, nullable=True, default=0.0)
     trans_fat: Mapped[float] = mapped_column(Float, nullable=True, default=0.0)
+    picture: Mapped[str] = mapped_column(String(length=255), nullable=True, index=True) # 사진경로
 
     routine_foods: Mapped[list["RoutineFood"]] = relationship(
         back_populates="food", cascade="all, delete-orphan"

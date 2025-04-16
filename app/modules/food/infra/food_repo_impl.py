@@ -15,4 +15,6 @@ class FoodRepository(IFoodRepository, ABC):
     def find_food_by_label(self, label: int):
         with SessionLocal() as db:
             food = db.query(Food).filter(Food.label == label).first()
+            if food is None:
+                return None
             return FoodVO(**row_to_dict(food))

@@ -10,6 +10,8 @@ class ErrorCode(Enum):
     TRACK_ROUTINE_NOT_FOUND = (status.HTTP_404_NOT_FOUND, "루틴이 존재하지 않습니다.")
     TRACK_ROUTINE_CHECK_NOT_FOUND = (status.HTTP_404_NOT_FOUND, "루틴체크가 존재하지 않습니다.")
     TRACK_NOT_FOUND = (status.HTTP_404_NOT_FOUND, "트랙이 존재하지 않습니다.")
+    TRACK_PARTICIPATION_NOT_FOUNT = (status.HTTP_404_NOT_FOUND, "트랙Participation이 존재하지 않습니다.")
+    ROUTINECHECK_NOT_FOUND = (status.HTTP_404_NOT_FOUND, "루틴체크가 존재하지 않습니다.")
 
     # Participant 관련 에러 코드
     PARTICIPANT_ALREADY_EXIST = (status.HTTP_409_CONFLICT, "이미 트랙에 참여중입니다.")

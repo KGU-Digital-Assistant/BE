@@ -3,6 +3,7 @@ from dataclasses import asdict
 from datetime import datetime, timedelta
 from typing import List
 
+import ulid
 from fastapi import HTTPException
 from sqlalchemy.orm import Session, joinedload
 
@@ -286,3 +287,52 @@ class TrackRepository(ITrackRepository, ABC):
             if clear_routine is None:
                 return None
             return RoutineCheckVO(**row_to_dict(clear_routine))
+            
+
+    def find_routin_food_all_by_trackroutin_id(self, trackroutin_id: str):
+        with SessionLocal() as db:
+            trackroutin_foods = (
+                db.query(TrackRoutine)
+                .options(
+                    joinedload(TrackRoutine.routine_foods).joinedload(RoutineFood.food)
+                )
+                .filter(TrackRoutine.id == trackroutin_id)
+                .all()
+            )
+            if trackroutin_foods is None:
+                return None
+            return trackroutin_foods
+
+    def create_routin_food_check(self, routine_food_id: str, dish_id: str, user_id: str):
+        with SessionLocal() as db:
+            new_routin_food_check = RoutineFoodCheck(
+                id=str(ulid.ULID()),
+                routine_food_id=routine_food_id,
+                dish_id=dish_id,
+                user_id=user_id,
+                is_complete=True,  ## 추후 변경필요
+                check_time=datetime.utcnow()
+            )
+            db.add(new_routin_food_check)
+            db.commit()
+
+    def update_routin_check(self, user_id: str, routin_id: str):
+        with SessionLocal() as db:
+            routin_check=db.query(RoutineCheck).filter(RoutineCheck.user_id==user_id,RoutineCheck.routine_id==routin_id).first()
+            if routin_check is None:
+                return None
+            routin_check.is_complete = True
+            routin_check.check_time = datetime.utcnow()
+            db.add(routin_check)
+            db.commit()
+            return routin_check
+
+    def find_routine_food_with_food_by_id(self, routine_food_id: str):
+        with SessionLocal() as db:
+            routine_food = db.query(RoutineFood).options(
+                    joinedload(RoutineFood.food)
+                ).filter(RoutineFood.id == routine_food_id).first()
+            if routine_food is None:
+                return None
+            return RoutineFoodVO(**row_to_dict(routine_food))
+

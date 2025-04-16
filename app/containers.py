@@ -55,5 +55,6 @@ class Container(containers.DeclarativeContainer):
         mealday_repo=mealday_repo,
         user_service=user_service,
         track_service=track_service,
+        food_service=food_service,
         crypto=crypto
     )

@@ -78,6 +78,22 @@ class ITrackRepository(metaclass=ABCMeta):
         raise NotImplementedError
 
     @abstractmethod
+    def find_routin_food_all_by_trackroutin_id(self, trackroutin_id: str):
+        raise NotImplementedError
+
+    @abstractmethod
+    def create_routin_food_check(self, routin_food_id: str, dish_id: str, user_id: str):
+        raise NotImplementedError
+
+    @abstractmethod
+    def update_routin_check(self, user_id: str, routin_id: str):
+        raise NotImplementedError
+
+    @abstractmethod
+    def find_routine_food_with_food_by_id(self, routine_food_id: str):
+        raise NotImplementedError
+
+    @abstractmethod
     def find_routine_check(self, routine_id: str, user_id: str):
         raise NotImplementedError
 

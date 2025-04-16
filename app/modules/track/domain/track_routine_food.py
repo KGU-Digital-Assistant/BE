@@ -1,7 +1,7 @@
 import datetime
 from dataclasses import dataclass, field
 from typing import Optional
-
+from datetime import datetime
 
 @dataclass
 class RoutineFood:
@@ -16,10 +16,10 @@ class RoutineFood:
 
 
 @dataclass
-class RoutineFoodCheck:
+class RoutinFoodCheck:
     id: str
-    routine_food_id: str
+    routin_food_id: str
     dish_id: str
     user_id: str
-    is_complete: bool
-    check_time: datetime.time
+    is_complete: bool = field(default=False)
+    check_time: datetime = field(default=datetime.utcnow())
