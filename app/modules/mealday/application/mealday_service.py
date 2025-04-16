@@ -213,6 +213,7 @@ class MealDayService:
         mealday = self.mealday_repo.find_by_date(user_id=user_id,record_date=record_date)
         if mealday is None:
             raise raise_error(ErrorCode.MEALDAY_NOT_FOUND)
+
         trackpart = self.track_service.track_repo.find_track_part_by_user_track_id(user_id=user_id, track_id=mealday.track_id)
         if trackpart is None:
             raise raise_error(ErrorCode.TRACK_PARTICIPATION_NOT_FOUNT)

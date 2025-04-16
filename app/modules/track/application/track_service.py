@@ -4,15 +4,17 @@ from typing import List
 from dependency_injector.wiring import inject
 
 from modules.food.application.food_service import FoodService
+from modules.food.domain.food import Food
 from modules.track.domain.track_participant import TrackParticipant as TrackParticipantVO
 from modules.track.domain.repository.track_repo import ITrackRepository
 
 from ulid import ULID
 
-from modules.track.domain.track import Track, TrackRoutine
+from modules.track.domain.track import Track, TrackRoutine, RoutineCheck
 from modules.track.domain.track_routine_food import RoutineFood
 from modules.track.interface.schema.track_schema import CreateTrackRoutineBody, UpdateRoutineBody, \
-    TrackResponse, UpdateTrackBody, TrackUpdateResponse, TrackStartBody, CreateTrackBody, RoutineFoodRequest
+    TrackResponse, UpdateTrackBody, TrackUpdateResponse, TrackStartBody, CreateTrackBody, RoutineFoodRequest, \
+    RoutineGroupResponse, RoutineFoodResponse, TrackRoutineResponse, RoutineFoodGroupResponse
 from modules.user.application.user_service import UserService
 from modules.user.domain.user import User
 from utils.db_utils import orm_to_pydantic_dataclass, orm_to_pydantic
@@ -75,12 +77,14 @@ class TrackService:
 
         for body_food in body.foods:
             food = self.food_service.get_food_data(food_label=body_food.food_label)
+            if food is None and body_food.food_name is None:
+                raise_error(ErrorCode.NO_FOOD_NO_NAME)
             routine_food = RoutineFood(
                 id="",
                 routine_id="",
                 food_label=body_food.food_label,
                 quantity=body_food.quantity,
-                food_name=body_food.food_name or food.food_name
+                food_name=body_food.food_name or food.name
             )
             routine_food_body.append(routine_food)
             calories += (food.calorie * routine_food.quantity)
@@ -185,6 +189,61 @@ class TrackService:
     def get_tracks(self, user_id: str):
         return self.track_repo.find_tracks_by_id(user_id)
 
+    def routine_food_check_list(self, user_id: str, routine_foods: List[RoutineFood], routine: TrackRoutine):
+        routine_foods_list = []
+        for routine_food in routine_foods:
+            routine_food_check = self.track_repo.find_routine_food_check_by_routine_food_id(routine_food.id, user_id)
+            status = False
+            if routine_food_check is not None:
+                status = routine_food_check.is_complete
+
+            routine_foods_list.append(
+                RoutineFoodGroupResponse(
+                    id=routine_food.id,
+                    routine_id=routine.id,
+                    food_label=routine_food.food_label,
+                    food_name=routine_food.food_name,
+                    quantity=routine_food.quantity,
+                    is_clear=status
+                )
+            )
+        return routine_foods_list
+
+    def routine_grouping(self, routines: List[TrackRoutine], track: Track, user_id: str):
+        days_grouped = [[] for _ in range(track.duration + 1)]
+
+        for routine in track.routines:
+            clear_routine = self.track_repo.find_routine_check(routine.id, user_id)
+            if clear_routine is None:
+                raise_error(ErrorCode.TRACK_ROUTINE_NOT_FOUND)
+            _day = int(routine.days)
+
+            days_grouped[_day].append(
+                RoutineGroupResponse(
+                    id=routine.id,
+                    track_id=track.id,
+                    title=routine.title,
+                    calorie=routine.calorie,
+                    mealtime=routine.mealtime,
+                    days=routine.days,
+                    clock=routine.clock,
+                    delete=routine.delete,
+                    routine_foods=self.routine_food_check_list(routine.id, routine.routine_foods, clear_routine),
+                    is_complete=clear_routine.is_complete,
+                )
+            )
+        idx = 0
+        for day in days_grouped:
+            days_grouped[idx] = sorted(day, key=lambda day: mealtime_parse(day.mealtime))
+            idx += 1
+
+        return days_grouped
+
+    def get_routine_list(self, track_id: str, user_id: str):
+        track = self.validate_track(track_id, user_id)
+        days_grouped = self.routine_grouping(track.routines, track, user_id)
+        return days_grouped
+
     def track_start(self, user_id: str, track_id: str, body: TrackStartBody):
         self.validate_track(track_id, user_id)
 
@@ -193,20 +252,9 @@ class TrackService:
         self.track_repo.update_start_date(track_id, user_id, body.start_date)
         return res
 
-    def get_routine_list(self, track_id: str, user_id: str):
-        track = self.validate_track(track_id, user_id)
-        days_grouped = [[] for _ in range(track.duration + 1)]
-
-        for routine in track.routines:
-            _day = int(routine.days)
-            days_grouped[_day].append(routine)
-
-        idx = 0
-        for day in days_grouped:
-            days_grouped[idx] = sorted(day, key=lambda day: mealtime_parse(day.mealtime))
-            idx += 1
-
-        return days_grouped
+    def track_terminate(self, user_id: str, track_id: str):
+        track = self.validate_track(user_id, track_id)
+        return self.track_repo.terminate_track(user_id, track.id)
 
     def copy_track(self, track_id: str, user_id: str):
         track = self.validate_track(track_id, user_id)
@@ -230,3 +278,15 @@ class TrackService:
             raise_error(ErrorCode.TRACK_ROUTINE_FOOD_NOT_FOUND)
         self.validate_routine(routine_food.track_routine_id, user_id)
         return routine_food
+
+    def create_routine_check(self, routine_id: str, user_id: str):
+        routine_check = self.track_repo.find_routine_check(routine_id, user_id)
+        if routine_check is not None:
+            raise_error(ErrorCode.ROUTINE_CHECK_ALREADY_EXIST)
+        new = RoutineCheck(
+            id=str(ULID()),
+            routine_id=routine_id,
+            user_id=user_id,
+            is_complete=False,
+        )
+        return self.track_repo.routine_check_save(new)

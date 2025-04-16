@@ -3,8 +3,8 @@ from datetime import datetime
 from typing import List
 
 from modules.track.domain.track_participant import TrackParticipant as TrackParticipantVO
-from modules.track.domain.track import Track, TrackRoutine
-from modules.track.domain.track_routine_food import RoutineFood
+from modules.track.domain.track import Track, TrackRoutine, RoutineCheck
+from modules.track.domain.track_routine_food import RoutineFood, RoutineFoodCheck
 from modules.track.interface.schema.track_schema import UpdateTrackBody
 
 
@@ -91,4 +91,20 @@ class ITrackRepository(metaclass=ABCMeta):
 
     @abstractmethod
     def find_routine_food_with_food_by_id(self, routine_food_id: str):
+        raise NotImplementedError
+
+    @abstractmethod
+    def find_routine_check(self, routine_id: str, user_id: str):
+        raise NotImplementedError
+
+    @abstractmethod
+    def terminate_track(self, user_id: str, track_id: str):
+        raise NotImplementedError
+
+    @abstractmethod
+    def routine_check_save(self, new: RoutineCheck):
+        raise NotImplementedError
+
+    @abstractmethod
+    def find_routine_food_check_by_routine_food_id(self, routine_food_id: str, user_id: str) -> RoutineFoodCheck:
         raise NotImplementedError
