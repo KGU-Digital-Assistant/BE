@@ -12,7 +12,7 @@ from modules.track.domain.repository.track_repo import ITrackRepository
 from modules.track.domain.track import Track as TrackVO
 from modules.track.domain.track import TrackRoutine as TrackRoutineVO, RoutineCheck as RoutineCheckVO
 from modules.track.domain.track_routine_food import RoutineFood as RoutineFoodVO
-from modules.track.domain.track_routine_food import RoutineFoodCheck as RoutineFoodCheckVO
+from modules.track.domain.track_routine_food import RoutinFoodCheck as RoutineFoodCheckVO
 from modules.track.domain.track_participant import TrackParticipant as TrackParticipantVO
 from modules.track.infra.db_models.track import Track, TrackRoutine, RoutineCheck
 from modules.track.infra.db_models.track_participant import TrackParticipant
@@ -289,14 +289,14 @@ class TrackRepository(ITrackRepository, ABC):
             return RoutineCheckVO(**row_to_dict(clear_routine))
             
 
-    def find_routin_food_all_by_trackroutin_id(self, trackroutin_id: str):
+    def find_routin_food_all_by_routine_id(self, routine_id: str):
         with SessionLocal() as db:
             trackroutin_foods = (
                 db.query(TrackRoutine)
                 .options(
                     joinedload(TrackRoutine.routine_foods).joinedload(RoutineFood.food)
                 )
-                .filter(TrackRoutine.id == trackroutin_id)
+                .filter(TrackRoutine.id == routine_id)
                 .all()
             )
             if trackroutin_foods is None:
@@ -316,16 +316,16 @@ class TrackRepository(ITrackRepository, ABC):
             db.add(new_routin_food_check)
             db.commit()
 
-    def update_routin_check(self, user_id: str, routin_id: str):
+    def update_routine_check(self, user_id: str, routine_id: str):
         with SessionLocal() as db:
-            routin_check=db.query(RoutineCheck).filter(RoutineCheck.user_id==user_id,RoutineCheck.routine_id==routin_id).first()
-            if routin_check is None:
+            routine_check=db.query(RoutineCheck).filter(RoutineCheck.user_id==user_id,RoutineCheck.routine_id==routine_id).first()
+            if routine_check is None:
                 return None
-            routin_check.is_complete = True
-            routin_check.check_time = datetime.utcnow()
-            db.add(routin_check)
+            routine_check.is_complete = True
+            routine_check.check_time = datetime.utcnow()
+            db.add(routine_check)
             db.commit()
-            return routin_check
+            return RoutineCheckVO(**row_to_dict(routine_check))
 
     def find_routine_food_with_food_by_id(self, routine_food_id: str):
         with SessionLocal() as db:
@@ -336,3 +336,11 @@ class TrackRepository(ITrackRepository, ABC):
                 return None
             return RoutineFoodVO(**row_to_dict(routine_food))
 
+    def find_routine_food_check_by_else(self, routine_food_id: str, dish_id: str,user_id: str):
+        with SessionLocal() as db:
+            routine_food_check = db.query(RoutineFoodCheck).filter(RoutineFoodCheck.routine_food_id==routine_food_id,
+                                                                   RoutineFoodCheck.dish_id==dish_id,
+                                                                   RoutineFoodCheck.user_id==user_id).first()
+            if routine_food_check is None:
+                return None
+            return RoutineFoodCheckVO(**row_to_dict(routine_food_check))

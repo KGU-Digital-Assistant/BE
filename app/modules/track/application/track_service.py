@@ -276,7 +276,7 @@ class TrackService:
         routine_food = self.track_repo.find_routine_food_by_id(routine_food_id)
         if routine_food is None:
             raise_error(ErrorCode.TRACK_ROUTINE_FOOD_NOT_FOUND)
-        self.validate_routine(routine_food.track_routine_id, user_id)
+        self.validate_routine(routine_food.routine_id, user_id)
         return routine_food
 
     def create_routine_check(self, routine_id: str, user_id: str):
@@ -290,3 +290,33 @@ class TrackService:
             is_complete=False,
         )
         return self.track_repo.routine_check_save(new)
+
+    def get_routine_food_all_by_routine_id(self, routine_id: str):
+        routin_foods=self.track_repo.find_routin_food_all_by_routine_id(routine_id=routine_id)
+        if routin_foods is None:
+            raise raise_error(ErrorCode.TRACK_ROUTINE_NOT_FOUND)
+        return routin_foods
+
+    def get_track_part_by_user_track_id(self, user_id: str, track_id: str):
+        track_part = self.track_repo.find_track_part_by_user_track_id(user_id=user_id,track_id=track_id)
+        if track_part is None:
+            raise raise_error(ErrorCode.TRACK_PARTICIPATION_NOT_FOUNT)
+        return track_part
+
+    def create_routine_food_check(self, routine_food_id: str, dish_id: str, user_id: str):
+        routine_food_check = self.track_repo.find_routine_food_check_by_else(routine_food_id=routine_food_id,
+                                                                             dish_id=dish_id,user_id=user_id)
+        if routine_food_check is not None:
+            raise raise_error(ErrorCode.ROUTINE_FOOD_CHECK_ALREADY_EXIST)
+        self.track_repo.create_routin_food_check(routine_food_id=routine_food_id,dish_id=dish_id,user_id=user_id)
+
+    def update_routine_check(self, user_id: str, routine_id: str):
+        routine_check = self.track_repo.update_routine_check(user_id=user_id,routine_id=routine_id)
+        if routine_check is None:
+            raise raise_error(ErrorCode.ROUTINECHECK_NOT_FOUND)
+
+    def get_routine_food_with_food_by_id(self, routine_food_id: str):
+        routine_food_with_food = self.track_repo.find_routine_food_with_food_by_id(routine_food_id=routine_food_id)
+        if routine_food_with_food is None:
+            raise raise_error(ErrorCode.TRACK_ROUTINE_FOOD_NOT_FOUND)
+        return routine_food_with_food

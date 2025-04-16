@@ -1,6 +1,6 @@
 from dataclasses import dataclass, field
 from datetime import datetime
-
+from modules.track.interface.schema.track_schema import FlagStatus
 
 @dataclass
 class TrackParticipant:
@@ -8,5 +8,5 @@ class TrackParticipant:
     user_id: str
     track_id: str
     joined_at: datetime = field(default_factory=datetime.utcnow)
-    finished: bool = False
+    status: FlagStatus = False
 
