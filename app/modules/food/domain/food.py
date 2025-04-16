@@ -23,6 +23,6 @@ class Food:
     zinc: float = field(default=0.0)
     cholesterol: float = field(default=0.0)
     trans_fat: float = field(default=0.0)
-    picture: str = field(default="사진경로")
+    image_url: str = field(default="사진경로")
 
     routine_foods: List[RoutineFood] = field(default_factory=list)

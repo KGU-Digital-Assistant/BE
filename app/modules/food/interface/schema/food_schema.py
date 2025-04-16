@@ -20,3 +20,4 @@ class Food_Data(BaseModel):
     zinc: Optional[float] = 0.0
     cholesterol: Optional[float] = 0.0
     trans_fat: Optional[float] = 0.0
+    image_url: Optional[str] = ""
