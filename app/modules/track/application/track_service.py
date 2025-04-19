@@ -114,7 +114,10 @@ class TrackService:
             routine_list.append(new_routine)
 
         routines = self.track_repo.routines_save(routine_list, track)
+        for routine in routines:
+            self.create_routine_check(routine.id, user_id)
         sorted_routines = sorted(routines, key=lambda routine: routine.days)
+
         return sorted_routines
 
     def create_routine_food(self, routine_id: str, body: RoutineFoodRequest, user_id: str):
@@ -216,9 +219,8 @@ class TrackService:
             clear_routine = self.track_repo.find_routine_check(routine.id, user_id)
             status = False
             if clear_routine is not None:
-                print(clear_routine)
                 status = clear_routine.is_complete
-            _day = int(routine.days)
+            _day = int(routine.days) - 1
 
             days_grouped[_day].append(
                 RoutineGroupResponse(
@@ -294,10 +296,10 @@ class TrackService:
         return self.track_repo.routine_check_save(new)
 
     def get_routine_food_all_by_routine_id(self, routine_id: str):
-        routin_foods=self.track_repo.find_routin_food_all_by_routine_id(routine_id=routine_id)
-        if routin_foods is None:
+        routine_foods=self.track_repo.find_routine_food_all_by_routine_id(routine_id=routine_id)
+        if routine_foods is None:
             raise raise_error(ErrorCode.TRACK_ROUTINE_NOT_FOUND)
-        return routin_foods
+        return routine_foods
 
     def get_track_part_by_user_track_id(self, user_id: str, track_id: str):
         track_part = self.track_repo.find_track_part_by_user_track_id(user_id=user_id,track_id=track_id)
@@ -310,7 +312,7 @@ class TrackService:
                                                                              dish_id=dish_id,user_id=user_id)
         if routine_food_check is not None:
             raise raise_error(ErrorCode.ROUTINE_FOOD_CHECK_ALREADY_EXIST)
-        self.track_repo.create_routin_food_check(routine_food_id=routine_food_id,dish_id=dish_id,user_id=user_id)
+        self.track_repo.create_routine_food_check(routine_food_id=routine_food_id, dish_id=dish_id, user_id=user_id)
 
     def update_routine_check(self, user_id: str, routine_id: str):
         routine_check = self.track_repo.update_routine_check(user_id=user_id,routine_id=routine_id)
@@ -322,3 +324,16 @@ class TrackService:
         if routine_food_with_food is None:
             raise raise_error(ErrorCode.TRACK_ROUTINE_FOOD_NOT_FOUND)
         return routine_food_with_food
+
+    def get_track_days(self, track_id: str, user_id: str):
+        track = self.validate_track(track_id, user_id)
+
+        days = {}
+        start_day = track.start_date
+        d = 1
+        for day in range(0, track.duration):
+            days[str(d) + "일차"] = start_day
+            start_day += timedelta(days=1)
+            d += 1
+
+        return days

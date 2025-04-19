@@ -107,16 +107,16 @@ class MealDayRepository(IMealDayRepository, ABC):
     ############## Dish ##################################################
     ########################################################################
 
-    def create_dish_trackroutin(self, user_id: str, mealday_id: str, trackroutin: TrackRoutine,
-                                trackpart_id: str, picture_path: str, food: Food | None, label: int | None, name: str | None):
+    def create_dish_trackroutine(self, user_id: str, mealday_id: str, trackroutine: TrackRoutine,
+                                 trackpart_id: str, picture_path: str, food: Food | None, label: int | None, name: str | None):
         with SessionLocal() as db:
             mealday = db.query(MealDay).filter(MealDay.id == mealday_id).first()
             new_dish = Dish(
                 id=str(ULID()),
                 user_id=user_id,
                 mealday_id=mealday.id,
-                mealtime=trackroutin.mealtime,
-                days=trackroutin.days,
+                mealtime=trackroutine.mealtime,
+                days=trackroutine.days,
                 name=food.name if food else name,
                 picture=picture_path,
                 text=None,
@@ -135,9 +135,9 @@ class MealDayRepository(IMealDayRepository, ABC):
             )
             db.add(new_dish)
             mealday.nowcalorie += new_dish.calorie
-            mealday.carb += new_dish.carb
-            mealday.protein += new_dish.protein
-            mealday.fat += new_dish.fat
+            mealday.carb += new_dish.carb or 0.0
+            mealday.protein += new_dish.protein or 0.0
+            mealday.fat += new_dish.fat or 0.0
             db.add(mealday)
             db.commit()
             return DishVO(**row_to_dict(new_dish))

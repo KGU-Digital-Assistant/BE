@@ -289,7 +289,7 @@ class TrackRepository(ITrackRepository, ABC):
             return RoutineCheckVO(**row_to_dict(clear_routine))
             
 
-    def find_routin_food_all_by_routine_id(self, routine_id: str):
+    def find_routine_food_all_by_routine_id(self, routine_id: str):
         with SessionLocal() as db:
             trackroutin_foods = (
                 db.query(TrackRoutine)
@@ -303,7 +303,7 @@ class TrackRepository(ITrackRepository, ABC):
                 return None
             return trackroutin_foods
 
-    def create_routin_food_check(self, routine_food_id: str, dish_id: str, user_id: str):
+    def create_routine_food_check(self, routine_food_id: str, dish_id: str, user_id: str):
         with SessionLocal() as db:
             new_routin_food_check = RoutineFoodCheck(
                 id=str(ulid.ULID()),

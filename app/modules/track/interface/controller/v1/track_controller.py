@@ -1,8 +1,9 @@
 import datetime
-from typing import Annotated, List
+from typing import Annotated, List, Dict
 
 from dependency_injector.wiring import inject, Provide
 from fastapi import APIRouter, Depends
+from sqlalchemy import Integer
 from starlette import status
 
 from containers import Container
@@ -88,6 +89,34 @@ def create_routine_check(
     return track_service.create_routine_check(routine_id, current_user.id)
 
 
+@track_router.get("/days/{track_id}", response_model=Dict[str, datetime.date])
+@inject
+def get_track_days(
+        track_id: str,
+        current_user: Annotated[CurrentUser, Depends(get_current_user)],
+        track_service: TrackService = Depends(Provide[Container.track_service]),
+):
+    """
+    ### v-16
+    - 트랙 일차별 몇월 몇일인지 GET
+    - 0번째 인덱스가 1일차임.
+    """
+    return track_service.get_track_days(track_id, current_user.id)
+
+
+@routine_router.get("/{routine_id}", response_model=TrackRoutineResponse)
+@inject
+def get_routine(
+        current_user: Annotated[CurrentUser, Depends(get_current_user)],
+        routine_id: str,
+        track_service: TrackService = Depends(Provide[Container.track_service]),
+):
+    """
+    하나의 루틴
+    """
+    return track_service.get_routine_by_id(routine_id, current_user.id)
+
+
 @track_router.get("/{track_id}", response_model=TrackResponse)
 @inject
 def get_track(
@@ -115,19 +144,6 @@ def get_routine_list(
     ...
     """
     return track_service.get_routine_list(track_id=track_id, user_id=current_user.id)
-
-
-@routine_router.get("/{routine_id}", response_model=TrackRoutineResponse)
-@inject
-def get_routine(
-        current_user: Annotated[CurrentUser, Depends(get_current_user)],
-        routine_id: str,
-        track_service: TrackService = Depends(Provide[Container.track_service]),
-):
-    """
-    하나의 루틴
-    """
-    return track_service.get_routine_by_id(routine_id, current_user.id)
 
 
 @track_router.get("/track/list", response_model=List[TrackUpdateResponse])
