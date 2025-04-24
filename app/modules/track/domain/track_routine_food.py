@@ -16,9 +16,9 @@ class RoutineFood:
 
 
 @dataclass
-class RoutinFoodCheck:
+class RoutineFoodCheck:
     id: str
-    routin_food_id: str
+    routine_food_id: str
     dish_id: str
     user_id: str
     is_complete: bool = field(default=False)

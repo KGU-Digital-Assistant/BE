@@ -15,7 +15,7 @@ from utils.responses.response import APIResponse
 mealday_router = APIRouter(prefix="/api/v1/meal_day", tags=["mealday"])
 
 
-@mealday_router.post("/post_date/{daytime}", response_model=MealDayResponse_Date)
+@mealday_router.post("/date/{daytime}", response_model=MealDayResponse_Date)
 @inject
 def create_mealday_by_date(
         daytime: Annotated[str, Path(description="생성날짜 (형식: YYYY-MM-DD)")],
@@ -27,7 +27,7 @@ def create_mealday_by_date(
     """
     return mealday_service.create_mealday_by_date(current_user.id,daytime)
 
-@mealday_router.post("/post_track_id/{track_id}", response_model=APIResponse)
+@mealday_router.post("/track_id/{track_id}", response_model=APIResponse)
 @inject
 def create_mealday_by_track_id(
         track_id: Annotated[str, Path(description="트랙 id (형식: dasfdsafads)")],
@@ -42,7 +42,7 @@ def create_mealday_by_track_id(
     created_count = mealday_service.create_mealday_by_track_id(current_user.id, track_id)
     return APIResponse(status_code=status.HTTP_200_OK, message=f"{created_count} mealday created")
 
-@mealday_router.get("/get/{daytime}", response_model=MealDayResponse_Full)
+@mealday_router.get("/{daytime}", response_model=MealDayResponse_Full)
 @inject
 def get_mealday_by_date(
     current_user: Annotated[CurrentUser, Depends(get_current_user)],
@@ -57,7 +57,7 @@ def get_mealday_by_date(
     """
     return mealday_service.find_mealday_by_date(current_user.id, daytime)
 
-@mealday_router.patch("/update/{daytime}", response_model=APIResponse)
+@mealday_router.patch("/{daytime}", response_model=APIResponse)
 @inject
 def update_mealday(
     current_user: Annotated[CurrentUser, Depends(get_current_user)],
@@ -91,7 +91,7 @@ async def moose(
     """
     return mealday_service.moose(current_user.id, file)
 
-@mealday_router.post("/remove_moose") ##식단게시 취소시 임시파일삭제(임시저장사진명 필요:file_path)
+@mealday_router.post("/remove-moose") ##식단게시 취소시 임시파일삭제(임시저장사진명 필요:file_path)
 @inject
 async def remove_moose(
     file_path: Annotated[str, Form(..., description="moose로 얻은 file_path")],
@@ -108,22 +108,22 @@ async def remove_moose(
 
 dish_router = APIRouter(prefix="/api/v1/dish", tags=["dish"])
 
-@dish_router.post("/register_v1/{daytime}/{trackroutin_id}", response_model=APIResponse)
+@dish_router.post("/r-v1/{daytime}/{routine_id}", response_model=APIResponse)
 @inject
 async def register_v1(
     current_user: Annotated[CurrentUser, Depends(get_current_user)],
     daytime: Annotated[str, Path(description="기록일자 (형식: 2024-06-01)")],
-    trackroutin_id: Annotated[str, Path(..., description="트랙루틴id")],
+    routine_id: Annotated[str, Path(..., description="트랙루틴id")],
     mealday_service: MealDayService = Depends(Provide[Container.mealday_service])
 ):
     """
     식단등록 v1(체크 표시로 음식 일괄등록)
-     - 입력예시 : daytime = 2024-06-01, trackroutin_id = fdasfewaerwq
+     - 입력예시 : daytime = 2024-06-01, routine_id = fdasfewaerwq
     """
-    mealday_service.register_dish_v1(current_user.id, daytime, trackroutin_id)
+    mealday_service.register_dish_v1(current_user.id, daytime, routine_id)
     return APIResponse(status_code=status.HTTP_200_OK, message="Dish Post Success")
 
-@dish_router.post("/dish/register_v2/{daytime}/{routine_food_id}", response_model=APIResponse)
+@dish_router.post("/r-v2/{daytime}/{routine_food_id}", response_model=APIResponse)
 @inject
 async def register_v2(
     current_user: Annotated[CurrentUser, Depends(get_current_user)],
@@ -139,7 +139,7 @@ async def register_v2(
     mealday_service.register_dish_v2(current_user.id, daytime, routine_food_id, picture)
     return APIResponse(status_code=status.HTTP_200_OK, message="Dish Post Success")
 
-@dish_router.post("/register_v3/{daytime}", response_model=APIResponse)
+@dish_router.post("/r-v3/{daytime}", response_model=APIResponse)
 @inject
 async def register_v3(
     current_user: Annotated[CurrentUser, Depends(get_current_user)],
@@ -154,7 +154,7 @@ async def register_v3(
     mealday_service.register_dish_v3(current_user.id, daytime, routine_food_ids)
     return APIResponse(status_code=status.HTTP_200_OK, message="Dish Post Success")
 
-@dish_router.post("/register_v4/{daytime}", response_model=APIResponse)
+@dish_router.post("/r-v4/{daytime}", response_model=APIResponse)
 @inject
 async def register_v4(
     current_user: Annotated[CurrentUser, Depends(get_current_user)],
@@ -169,7 +169,7 @@ async def register_v4(
     mealday_service.register_dish_v4(current_user.id, daytime, body)
     return APIResponse(status_code=status.HTTP_200_OK, message="Dish Post Success")
 
-@dish_router.get("/get/{dish_id}", response_model=Dish_Full)
+@dish_router.get("/{dish_id}", response_model=Dish_Full)
 @inject
 async def get_dish(
     current_user: Annotated[CurrentUser, Depends(get_current_user)],
@@ -183,7 +183,7 @@ async def get_dish(
     """
     return mealday_service.find_dish(current_user.id, dish_id)
 
-@dish_router.post("/remove/{dish_id}", response_model=APIResponse) ## 등록한 Dish 삭제
+@dish_router.delete("/{dish_id}", response_model=APIResponse) ## 등록한 Dish 삭제
 @inject
 async def remove_dish(
     current_user: Annotated[CurrentUser, Depends(get_current_user)],
@@ -191,14 +191,13 @@ async def remove_dish(
     mealday_service: MealDayService = Depends(Provide[Container.mealday_service])
 ):
     """
-    식단시간별(MealHour) 삭제
-     - 입력예시 : daytime = 2024-06-01, mealtime = LUNCH
+    Dish 삭제
     """
     mealday_service.remove_dish(current_user.id, dish_id)
     return APIResponse(status_code=status.HTTP_200_OK, message="Dish Delete Success")
 
 
-@dish_router.patch("/update/{dish_id}", response_model=APIResponse)
+@dish_router.patch("/{dish_id}", response_model=APIResponse)
 @inject
 def update_dish(
     current_user: Annotated[CurrentUser, Depends(get_current_user)],

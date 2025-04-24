@@ -74,7 +74,7 @@ class TrackRoutineResponse(BaseModel):
 
 
 class RoutineGroupResponse(TrackRoutineResponse):
-    is_clear: bool = False
+    is_clear: bool
     routine_foods: Optional[List[RoutineFoodGroupResponse]]
 
 

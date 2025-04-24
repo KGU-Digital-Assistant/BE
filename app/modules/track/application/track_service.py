@@ -114,7 +114,10 @@ class TrackService:
             routine_list.append(new_routine)
 
         routines = self.track_repo.routines_save(routine_list, track)
+        for routine in routines:
+            self.create_routine_check(routine.id, user_id)
         sorted_routines = sorted(routines, key=lambda routine: routine.days)
+
         return sorted_routines
 
     def create_routine_food(self, routine_id: str, body: RoutineFoodRequest, user_id: str):
@@ -214,9 +217,10 @@ class TrackService:
 
         for routine in track.routines:
             clear_routine = self.track_repo.find_routine_check(routine.id, user_id)
-            if clear_routine is None:
-                raise_error(ErrorCode.TRACK_ROUTINE_NOT_FOUND)
-            _day = int(routine.days)
+            status = False
+            if clear_routine is not None:
+                status = clear_routine.is_complete
+            _day = int(routine.days) - 1
 
             days_grouped[_day].append(
                 RoutineGroupResponse(
@@ -229,7 +233,7 @@ class TrackService:
                     clock=routine.clock,
                     delete=routine.delete,
                     routine_foods=self.routine_food_check_list(routine.id, routine.routine_foods, clear_routine),
-                    is_complete=clear_routine.is_complete,
+                    is_clear=status,
                 )
             )
         idx = 0
@@ -276,7 +280,7 @@ class TrackService:
         routine_food = self.track_repo.find_routine_food_by_id(routine_food_id)
         if routine_food is None:
             raise_error(ErrorCode.TRACK_ROUTINE_FOOD_NOT_FOUND)
-        self.validate_routine(routine_food.track_routine_id, user_id)
+        self.validate_routine(routine_food.routine_id, user_id)
         return routine_food
 
     def create_routine_check(self, routine_id: str, user_id: str):
@@ -290,3 +294,46 @@ class TrackService:
             is_complete=False,
         )
         return self.track_repo.routine_check_save(new)
+
+    def get_routine_food_all_by_routine_id(self, routine_id: str):
+        routine_foods=self.track_repo.find_routine_food_all_by_routine_id(routine_id=routine_id)
+        if routine_foods is None:
+            raise raise_error(ErrorCode.TRACK_ROUTINE_NOT_FOUND)
+        return routine_foods
+
+    def get_track_part_by_user_track_id(self, user_id: str, track_id: str):
+        track_part = self.track_repo.find_track_part_by_user_track_id(user_id=user_id,track_id=track_id)
+        if track_part is None:
+            raise raise_error(ErrorCode.TRACK_PARTICIPATION_NOT_FOUNT)
+        return track_part
+
+    def create_routine_food_check(self, routine_food_id: str, dish_id: str, user_id: str):
+        routine_food_check = self.track_repo.find_routine_food_check_by_else(routine_food_id=routine_food_id,
+                                                                             dish_id=dish_id,user_id=user_id)
+        if routine_food_check is not None:
+            raise raise_error(ErrorCode.ROUTINE_FOOD_CHECK_ALREADY_EXIST)
+        self.track_repo.create_routine_food_check(routine_food_id=routine_food_id, dish_id=dish_id, user_id=user_id)
+
+    def update_routine_check(self, user_id: str, routine_id: str):
+        routine_check = self.track_repo.update_routine_check(user_id=user_id,routine_id=routine_id)
+        if routine_check is None:
+            raise raise_error(ErrorCode.ROUTINECHECK_NOT_FOUND)
+
+    def get_routine_food_with_food_by_id(self, routine_food_id: str):
+        routine_food_with_food = self.track_repo.find_routine_food_with_food_by_id(routine_food_id=routine_food_id)
+        if routine_food_with_food is None:
+            raise raise_error(ErrorCode.TRACK_ROUTINE_FOOD_NOT_FOUND)
+        return routine_food_with_food
+
+    def get_track_days(self, track_id: str, user_id: str):
+        track = self.validate_track(track_id, user_id)
+
+        days = {}
+        start_day = track.start_date
+        d = 1
+        for day in range(0, track.duration):
+            days[str(d) + "일차"] = start_day
+            start_day += timedelta(days=1)
+            d += 1
+
+        return days
