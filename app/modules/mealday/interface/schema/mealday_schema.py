@@ -78,7 +78,8 @@ class Dish_Full(BaseModel):
     mealtime: MealTime
     days: Optional[int] = None
     name: Optional[str] = None
-    picture: Optional[str] = None
+    quantity: Optional[int] = None
+    image_url: Optional[str] = None
     text: Optional[str] = None
     record_datetime: datetime
     update_datetime: datetime
@@ -104,5 +105,6 @@ class CreateDishBody(BaseModel):
     mealtime: str
     days: int
     name: Optional[str] = None
-    picture: Optional[str] = None
+    quantity: Optional[int] = None
+    image_url: Optional[str] = None
     label: Optional[int] = None
