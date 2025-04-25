@@ -182,7 +182,7 @@ class MealDayService:
         track_part = self.track_service.get_track_part_by_user_track_id(user_id=user_id, track_id=mealday.track_id)
         for track_routine in track_routine_foods:
             for rf in track_routine.routine_foods:
-                picture_path = None
+                image_path = None
                 label = rf.food_label if rf.food_label is not None else None
                 if rf.food_label is not None and rf.food is not None:
                     file_id = self.create_file_name(user_id=user_id)
@@ -190,9 +190,9 @@ class MealDayService:
                     food_blob = bucket.blob(rf.food.image_url if rf.food.image_url is not None else dish_path)
                     dish_blob = bucket.blob(dish_path)
                     bucket.copy_blob(food_blob, bucket, dish_blob.name)
-                    picture_path = dish_blob.name
+                    image_path = dish_blob.name
                 dish = self.mealday_repo.create_dish_trackroutine(user_id=user_id, mealday_id=mealday.id, trackroutine=track_routine,
-                                                                  trackpart_id=track_part.id, picture_path=picture_path, food=rf.food, label=label, name=rf.food_name)
+                                                                  trackpart_id=track_part.id, image_url=image_path, quantity=rf.quantity, food=rf.food, label=label, name=rf.food_name)
                 self.track_service.create_routine_food_check(routine_food_id=rf.id, dish_id=dish.id, user_id=user_id)
                 self.track_service.update_routine_check(user_id=user_id,routine_id=routine_id)
 
@@ -208,9 +208,9 @@ class MealDayService:
         file_id = self.create_file_name(user_id=user_id)
         blob = bucket.blob(f"meal/{file_id}")
         blob.upload_from_file(picture.file, content_type=picture.content_type)
-        picture_path = blob.name
+        image_path = blob.name
         dish = self.mealday_repo.create_dish_trackroutine(user_id=user_id, mealday_id=mealday.id, trackroutine=track_routine,
-                                                          trackpart_id=track_part.id, picture_path=picture_path, food=None, label=None, name=routine_food.food_name)
+                                                          trackpart_id=track_part.id, image_url=image_path, quantity=routine_food.quantity,food=None, label=None, name=routine_food.food_name)
         self.track_service.create_routine_food_check(routine_food_id=routine_food_id, dish_id=dish.id, user_id=user_id)
         self.track_service.update_routine_check(user_id=user_id,routine_id=track_routine.id)
 
@@ -224,7 +224,7 @@ class MealDayService:
         for routine_food_id in routine_food_ids:
             routine_food = self.track_service.get_routine_food_with_food_by_id(routine_food_id=routine_food_id)
             track_routine = self.track_service.get_routine_by_id(routine_id=routine_food.routine_id, user_id=user_id)
-            picture_path = None
+            image_path = None
             label = routine_food.food_label if routine_food.food_label is not None else None
             if routine_food.food_label is not None and routine_food.food is not None:
                 file_id = self.create_file_name(user_id=user_id)
@@ -232,9 +232,9 @@ class MealDayService:
                 food_blob = bucket.blob(routine_food.food.image_url)
                 dish_blob = bucket.blob(dish_path)
                 bucket.copy_blob(food_blob, bucket, dish_blob.name)
-                picture_path = dish_blob.name
+                image_path = dish_blob.name
             dish = self.mealday_repo.create_dish_trackroutine(user_id=user_id, mealday_id=mealday.id, trackroutine=track_routine,
-                                                              trackpart_id=track_part.id, picture_path=picture_path, food=routine_food.food, label=label, name=routine_food.food_name)
+                                                              trackpart_id=track_part.id, image_url=image_path, quantity=routine_food.quantity,food=routine_food.food, label=label, name=routine_food.food_name)
             self.track_service.create_routine_food_check(routine_food_id=routine_food.id, dish_id=dish.id,
                                                                            user_id=user_id)
             self.track_service.update_routine_check(user_id=user_id,routine_id=track_routine.id)
@@ -270,11 +270,11 @@ class MealDayService:
         return dish
 
     def remove_dish(self, user_id: str, dish_id: str):
-        picture_path = self.mealday_repo.delete_dish(user_id = user_id, dish_id = dish_id)
-        if picture_path is None:
+        image_url = self.mealday_repo.delete_dish(user_id = user_id, dish_id = dish_id)
+        if image_url is None:
             return
         else:
-            blob = bucket.blob(picture_path)
+            blob = bucket.blob(image_url)
             if blob.exists():
                 blob.delete()
 

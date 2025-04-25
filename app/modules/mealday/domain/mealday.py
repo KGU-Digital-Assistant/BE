@@ -11,7 +11,8 @@ class Dish:  # 식단등록
     mealtime: MealTime
     days: int = field(default=0)
     name: str = field(default="새로운 식단 등록")
-    picture: Optional[str] = None
+    quantity: int = field(default=1)
+    image_url: Optional[str] = None
     text: str = field(default="내용 입력")
     record_datetime: datetime = field(default_factory=datetime.utcnow)
     update_datetime: datetime = field(default_factory=datetime.utcnow)
