@@ -2,13 +2,13 @@ from abc import ABCMeta, abstractmethod
 
 from datetime import date, datetime
 from typing import List
-from modules.user.domain.user import User as User
-from modules.mealday.domain.mealday import MealDay as MealDay
-from modules.mealday.domain.mealday import Dish as Dish
-from modules.track.domain.track import TrackRoutine as TrackRoutine
-from modules.food.domain.food import Food as Food
-from modules.mealday.interface.schema.mealday_schema import CreateDishBody
-from modules.track.interface.schema.track_schema import MealTime
+from app.modules.user.domain.user import User as User
+from app.modules.mealday.domain.mealday import MealDay as MealDay
+from app.modules.mealday.domain.mealday import Dish as Dish
+from app.modules.track.domain.track import TrackRoutine as TrackRoutine
+from app.modules.food.domain.food import Food as Food
+from app.modules.mealday.interface.schema.mealday_schema import CreateDishBody
+from app.modules.track.interface.schema.track_schema import MealTime
 
 class IMealDayRepository(metaclass=ABCMeta):
     @abstractmethod

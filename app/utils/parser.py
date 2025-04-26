@@ -3,7 +3,7 @@ from http import HTTPStatus
 from fastapi import HTTPException
 from rich import status
 
-from modules.track.interface.schema.track_schema import MealTime
+from app.modules.track.interface.schema.track_schema import MealTime
 
 
 def weekday_parse(weekday: str):

@@ -1,26 +1,26 @@
 from dependency_injector import containers, providers
 import ulid
 
-from database import get_db, SessionLocal
-from modules.track.application.track_service import TrackService
-from modules.track.infra.repository.track_repo_impl import TrackRepository
-from modules.user.application.user_service import UserService
-from modules.user.infra.user_repo_impl import UserRepository
-from modules.mealday.infra.mealday_repo_impl import MealDayRepository
-from modules.mealday.application.mealday_service import MealDayService
-from modules.food.infra.food_repo_impl import FoodRepository
-from modules.food.application.food_service import FoodService
+from app.database import get_db, SessionLocal
+from app.modules.track.application.track_service import TrackService
+from app.modules.track.infra.repository.track_repo_impl import TrackRepository
+from app.modules.user.application.user_service import UserService
+from app.modules.user.infra.user_repo_impl import UserRepository
+from app.modules.mealday.infra.mealday_repo_impl import MealDayRepository
+from app.modules.mealday.application.mealday_service import MealDayService
+from app.modules.food.infra.food_repo_impl import FoodRepository
+from app.modules.food.application.food_service import FoodService
 
-from utils.crypto import Crypto
+from app.utils.crypto import Crypto
 
 
 class Container(containers.DeclarativeContainer):
     wiring_config = containers.WiringConfiguration(
         packages=[
-            "modules.user",  # 의존성을 사용하는 모듈
-            "modules.track",
-            "modules.mealday",
-            "modules.food",
+            "app.modules.user",  # 의존성을 사용하는 모듈
+            "app.modules.track",
+            "app.modules.mealday",
+            "app.modules.food",
         ]
     )
 

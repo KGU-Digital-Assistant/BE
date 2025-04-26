@@ -2,12 +2,12 @@ import uvicorn
 from fastapi import FastAPI
 from starlette.middleware.cors import CORSMiddleware
 
-from containers import Container
-from modules.user.interface.controller.v1 import user_controller as user_router
-from modules.mealday.interface.controller.v1 import mealday_controller as mealday_router
-from modules.track.interface.controller.v1 import track_controller as track_router
-from modules.food.interface.controller.v1 import food_controller as food_router
-from utils.scheduler import start_track_scheduler
+from app.containers import Container
+from app.modules.user.interface.controller.v1 import user_controller as user_router
+from app.modules.mealday.interface.controller.v1 import mealday_controller as mealday_router
+from app.modules.track.interface.controller.v1 import track_controller as track_router
+from app.modules.food.interface.controller.v1 import food_controller as food_router
+from app.utils.scheduler import start_track_scheduler
 
 app = FastAPI()
 app.container = Container()

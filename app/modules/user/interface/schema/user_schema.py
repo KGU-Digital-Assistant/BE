@@ -5,7 +5,7 @@ from typing import Optional
 from pydantic import BaseModel, EmailStr, field_validator, Field
 from pydantic_core.core_schema import FieldValidationInfo
 
-from core.auth import Role
+from app.core.auth import Role
 
 
 class Gender(Enum):

@@ -1,7 +1,7 @@
 from dataclasses import dataclass, field
 from typing import List
 
-from modules.track.domain.track_routine_food import RoutineFood
+from app.modules.track.domain.track_routine_food import RoutineFood
 
 
 @dataclass

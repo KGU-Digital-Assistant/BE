@@ -1,9 +1,9 @@
 from fastapi import APIRouter, Depends, Query
 from dependency_injector.wiring import inject, Provide
-from containers import Container
+from app.containers import Container
 from typing import List
-from modules.food.application.food_service import FoodService
-from modules.food.interface.schema.food_schema import Food_Data
+from app.modules.food.application.food_service import FoodService
+from app.modules.food.interface.schema.food_schema import Food_Data
 
 
 router = APIRouter(prefix="/api/v1/food", tags=["food"])

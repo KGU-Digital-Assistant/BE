@@ -7,9 +7,9 @@ from fastapi import HTTPException, Depends, status
 from fastapi.security import OAuth2PasswordBearer
 from jose import jwt, JWTError
 
-from app_config import Settings, get_settings
-from utils.exceptions.error_code import ErrorCode
-from utils.exceptions.handlers import raise_error
+from app.app_config import Settings, get_settings
+from app.utils.exceptions.error_code import ErrorCode
+from app.utils.exceptions.handlers import raise_error
 
 settings = get_settings()
 

@@ -1,9 +1,9 @@
 from datetime import datetime
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from database import Base
+from app.database import Base
 from sqlalchemy import Integer, String, Float, Boolean, DateTime, Date, ForeignKey, Enum, Time
 
-from modules.track.interface.schema.track_schema import FlagStatus
+from app.modules.track.interface.schema.track_schema import FlagStatus
 
 
 class TrackParticipant(Base):

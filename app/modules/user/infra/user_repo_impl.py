@@ -3,15 +3,15 @@ from datetime import datetime
 
 from ulid import ULID
 
-from core.auth import Role
-from database import SessionLocal
-from modules.user.domain.repository.user_repo import IUserRepository
-from modules.user.domain.user import User as UserVO
-from modules.user.infra.db_models.user import User#, Mentor
-from modules.user.interface.schema.user_schema import CreateUserBody, Rank
-from utils.db_utils import row_to_dict
-from utils.exceptions.error_code import ErrorCode
-from utils.exceptions.handlers import raise_error
+from app.core.auth import Role
+from app.database import SessionLocal
+from app.modules.user.domain.repository.user_repo import IUserRepository
+from app.modules.user.domain.user import User as UserVO
+from app.modules.user.infra.db_models.user import User#, Mentor
+from app.modules.user.interface.schema.user_schema import CreateUserBody, Rank
+from app.utils.db_utils import row_to_dict
+from app.utils.exceptions.error_code import ErrorCode
+from app.utils.exceptions.handlers import raise_error
 
 
 class UserRepository(IUserRepository, ABC):

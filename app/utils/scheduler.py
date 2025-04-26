@@ -1,9 +1,9 @@
-from database import SessionLocal
+from app.database import SessionLocal
 from apscheduler.schedulers.background import BackgroundScheduler
 from datetime import datetime, date
-from modules.track.infra.db_models.track import Track
-from modules.track.infra.db_models.track_participant import TrackParticipant
-from modules.track.interface.schema.track_schema import FlagStatus
+from app.modules.track.infra.db_models.track import Track
+from app.modules.track.infra.db_models.track_participant import TrackParticipant
+from app.modules.track.interface.schema.track_schema import FlagStatus
 
 
 def check_and_end_tracks():

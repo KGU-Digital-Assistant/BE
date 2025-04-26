@@ -2,10 +2,10 @@ from abc import ABCMeta, abstractmethod
 from datetime import datetime
 from typing import List
 
-from modules.track.domain.track_participant import TrackParticipant as TrackParticipantVO
-from modules.track.domain.track import Track, TrackRoutine, RoutineCheck
-from modules.track.domain.track_routine_food import RoutineFood, RoutineFoodCheck
-from modules.track.interface.schema.track_schema import UpdateTrackBody
+from app.modules.track.domain.track_participant import TrackParticipant as TrackParticipantVO
+from app.modules.track.domain.track import Track, TrackRoutine, RoutineCheck
+from app.modules.track.domain.track_routine_food import RoutineFood, RoutineFoodCheck
+from app.modules.track.interface.schema.track_schema import UpdateTrackBody
 
 
 class ITrackRepository(metaclass=ABCMeta):

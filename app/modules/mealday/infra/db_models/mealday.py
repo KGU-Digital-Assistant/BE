@@ -3,8 +3,8 @@ import ulid
 import sqlalchemy
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy import String, Date, Integer, Float, ForeignKey, UniqueConstraint, DateTime, Enum, Boolean, Index, Table, Column
-from database import Base
-from modules.track.interface.schema.track_schema import MealTime
+from app.database import Base
+from app.modules.track.interface.schema.track_schema import MealTime
 
 
 class MealDay(Base):

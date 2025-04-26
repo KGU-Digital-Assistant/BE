@@ -4,8 +4,8 @@ from enum import Enum
 
 from pydantic import EmailStr
 
-from core.auth import Role
-from modules.user.interface.schema.user_schema import Gender, Rank
+from app.core.auth import Role
+from app.modules.user.interface.schema.user_schema import Gender, Rank
 
 
 @dataclass
