@@ -108,7 +108,7 @@ class MealDayRepository(IMealDayRepository, ABC):
     ########################################################################
 
     def create_dish_trackroutine(self, user_id: str, mealday_id: str, trackroutine: TrackRoutine,
-                                 trackpart_id: str, picture_path: str, food: Food | None, label: int | None, name: str | None):
+                                 trackpart_id: str, image_url: str, quantity: int | None, food: Food | None, label: int | None, name: str | None):
         with SessionLocal() as db:
             mealday = db.query(MealDay).filter(MealDay.id == mealday_id).first()
             new_dish = Dish(
@@ -118,7 +118,8 @@ class MealDayRepository(IMealDayRepository, ABC):
                 mealtime=trackroutine.mealtime,
                 days=trackroutine.days,
                 name=food.name if food else name,
-                picture=picture_path,
+                quantity = quantity,
+                image_url=image_url,
                 text=None,
                 record_datetime=datetime.utcnow(),
                 update_datetime=datetime.utcnow(),
@@ -142,7 +143,7 @@ class MealDayRepository(IMealDayRepository, ABC):
             db.commit()
             return DishVO(**row_to_dict(new_dish))
 
-    def create_dish(self, user_id: str, mealday_id: str ,body: CreateDishBody, trackpart_id: str, mealtime: MealTime, food: Food):
+    def create_dish(self, user_id: str, mealday_id: str, body: CreateDishBody, trackpart_id: str, mealtime: MealTime, food: Food):
         with SessionLocal() as db:
             mealday = db.query(MealDay).filter(MealDay.id == mealday_id).first()
             new_dish = Dish(
@@ -152,7 +153,8 @@ class MealDayRepository(IMealDayRepository, ABC):
                 mealtime=mealtime,
                 days=body.days,
                 name=body.name,
-                picture=body.picture,
+                quantity=body.quantity,
+                image_url=body.image_url,
                 text=None,
                 record_datetime=datetime.utcnow(),
                 update_datetime=datetime.utcnow(),
@@ -198,10 +200,10 @@ class MealDayRepository(IMealDayRepository, ABC):
             mealday.fat -= dish.fat
             mealday.nowcalorie -= dish.calorie
             mealday.update_datetime = datetime.utcnow()
-            picture_path=dish.image_url
+            image_url=dish.image_url
             db.delete(dish)
             db.commit()
-            return picture_path
+            return image_url
 
     def update_dish(self, _dish: Dish, percent: float):
         with SessionLocal() as db:

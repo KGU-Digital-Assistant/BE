@@ -49,7 +49,8 @@ class Dish(Base):
     mealtime: Mapped[MealTime] = mapped_column(Enum(MealTime), nullable=False) #LUNCH, DINNER 등
     days: Mapped[int] = mapped_column(Integer, nullable=False, default=0) #일차
     name: Mapped[str] = mapped_column(String(length=255), nullable=False, default="새로운 식단 등록")
-    picture: Mapped[str] = mapped_column(String(length=255), nullable=True, index=True) # 사진경로
+    quantity: Mapped[int] = mapped_column(Integer, nullable=False, default=1) #수량
+    image_url: Mapped[str] = mapped_column(String(length=255), nullable=True, index=True) # 사진경로
     text: Mapped[str] = mapped_column(String(length=255), nullable=True, default="내용입력")
     record_datetime: Mapped[DateTime] = mapped_column(DateTime, nullable=False, default=datetime.utcnow())  ## 등록시점 분단뒤
     update_datetime: Mapped[DateTime] = mapped_column(DateTime, nullable=False, default=datetime.utcnow())
@@ -61,6 +62,6 @@ class Dish(Base):
     unit:Mapped[str] = mapped_column(String(length=255), nullable=True, default="gram")  ##저장단위
     size: Mapped[float] = mapped_column(Float, nullable=True, default=0.0) #저장 사이즈
     track_goal: Mapped[bool] = mapped_column(Boolean, nullable=True, default=False)
-    label: Mapped[int] = mapped_column(Integer, nullable=True, default=None)  ## label 필요유무 검토필요
+    label: Mapped[int] = mapped_column(Integer, ForeignKey("Food.label"), nullable=True, default=None)  ## label 필요유무 검토필요
     trackpart_id: Mapped[str] = mapped_column(String(length=26), ForeignKey("TrackParticipant.id"), nullable=True)
     mealday: Mapped["MealDay"] = relationship("MealDay", back_populates="dishes")

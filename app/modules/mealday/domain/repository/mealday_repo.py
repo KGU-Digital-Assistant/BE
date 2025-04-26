@@ -33,7 +33,7 @@ class IMealDayRepository(metaclass=ABCMeta):
 
     @abstractmethod
     def create_dish_trackroutine(self, user_id: str, mealday_id: str, trackroutine: TrackRoutine,
-                                 trackpart_id: str, picture_path: str, food: Food | None, label: int | None, name: str | None):
+                                 trackpart_id: str, image_url: str, quantity: int | None, food: Food | None, label: int | None, name: str | None):
         raise NotImplementedError
 
     @abstractmethod
