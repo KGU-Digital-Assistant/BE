@@ -4,9 +4,11 @@ from sqlalchemy.orm import sessionmaker
 from app.database import Base, get_db
 from app.main import app
 from fastapi.testclient import TestClient
+from app.app_config import get_settings
 
-# 여기 수정
-SQLALCHEMY_DATABASE_URL = "postgresql+psycopg2://postgres:1234@localhost:5433/test_db"
+settings = get_settings()
+
+SQLALCHEMY_DATABASE_URL = settings.TEST_SQLALCHEMY_DATABASE_URL
 
 engine = create_engine(SQLALCHEMY_DATABASE_URL)
 TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
