@@ -4,8 +4,8 @@ from sqlalchemy import engine_from_config, pool
 from alembic import context
 from dotenv import load_dotenv
 
-import database
-import database_model
+import app.database
+import app.database_model
 
 # Alembic 설정
 config = context.config
@@ -14,7 +14,7 @@ config = context.config
 fileConfig(config.config_file_name)
 
 # 대상 메타데이터
-target_metadata = database.Base.metadata
+target_metadata = app.database.Base.metadata
 
 def run_migrations_offline():
     """Run migrations in 'offline' mode."""
