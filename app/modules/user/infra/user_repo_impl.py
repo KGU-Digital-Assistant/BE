@@ -46,7 +46,10 @@ class UserRepository(IUserRepository, ABC):
 
     def find_by_id(self, id: str):
         with SessionLocal() as db:
-            return db.query(User).filter(User.id == id).first()
+            user = db.query(User).filter(User.id == id).first()
+            if not user:
+                return None
+            return UserVO(**row_to_dict(user))
 
     def find_by_cellphone(self, cellphone: str):
         with SessionLocal() as db:
@@ -70,7 +73,7 @@ class UserRepository(IUserRepository, ABC):
             user.update_date = _user.update_date
 
             db.commit()
-            return user
+            return UserVO(**row_to_dict(user))
 
     def delete(self, id: str):
         with SessionLocal() as db:
@@ -94,7 +97,10 @@ class UserRepository(IUserRepository, ABC):
     def find_by_username_all(self, username: str):
         with SessionLocal() as db:
             user_list = db.query(User).filter(User.username == username).all()
-            return user_list
+            user_vo_list = []
+            for user in user_list:
+                user_vo_list.append(UserVO(**row_to_dict(user)))
+            return user_vo_list
 
     # def find_users_mentor_info_by_user_id(self, user_id: str):### 유저의 멘토id를 활용해서 멘토의 user_id를 찾기
     #     with SessionLocal() as db:

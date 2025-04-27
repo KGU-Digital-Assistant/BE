@@ -60,7 +60,7 @@ class UserInfoResponse(UserResponse):
     gender: Gender
     birth: date
     rank: Rank
-    profile_picture: str
+    profile_picture: str | None
     create_date: datetime
     update_date: datetime
 
