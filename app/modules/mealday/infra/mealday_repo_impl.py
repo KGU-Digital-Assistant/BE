@@ -91,6 +91,10 @@ class MealDayRepository(IMealDayRepository, ABC):
         with SessionLocal() as db:
             return db.query(MealDay).filter(MealDay.user_id == user_id, MealDay.record_date == record_date).first()
 
+    def find_by_id(self, mealday_id: str) -> MealDayVO:
+        with SessionLocal() as db:
+            return db.query(MealDay).filter(MealDay.id == mealday_id).first()
+
     def update_mealday(self, _mealday: MealDay):
         with SessionLocal() as db:
             mealday = db.query(MealDay).filter(MealDay.id == _mealday.id, MealDay.record_date == _mealday.record_date).first()
@@ -124,12 +128,12 @@ class MealDayRepository(IMealDayRepository, ABC):
                 record_datetime=datetime.utcnow(),
                 update_datetime=datetime.utcnow(),
                 heart=False,
-                carb=food.carb if food else 0.0,
-                protein=food.protein if food else 0.0,
-                fat=food.fat if food else 0.0,
-                calorie=food.calorie if food else 700.0,
+                carb=food.carb * quantity if food else 0.0,
+                protein=food.protein * quantity if food else 0.0,
+                fat=food.fat * quantity if food else 0.0,
+                calorie=food.calorie * quantity if food else 700.0 * quantity,
                 unit="gram",
-                size=food.size if food else 100.0,
+                size=food.size * quantity if food else 100.0,
                 track_goal=False,
                 label=label if label else None,
                 trackpart_id=trackpart_id,
@@ -159,10 +163,10 @@ class MealDayRepository(IMealDayRepository, ABC):
                 record_datetime=datetime.utcnow(),
                 update_datetime=datetime.utcnow(),
                 heart=False,
-                carb=food.carb if food else 0.0,
-                protein=food.protein if food else 0.0,
-                fat=food.fat if food else 0.0,
-                calorie=food.calorie if food else 700.0,
+                carb=food.carb * body.quantity if food else 0.0,
+                protein=food.protein * body.quantity if food else 0.0,
+                fat=food.fat * body.quantity if food else 0.0,
+                calorie=food.calorie * body.quantity if food else 700.0 * body.quantity,
                 unit="gram",
                 size=food.size if food else 100.0,
                 track_goal=False,
@@ -205,7 +209,7 @@ class MealDayRepository(IMealDayRepository, ABC):
             db.commit()
             return image_url
 
-    def update_dish(self, _dish: Dish, percent: float):
+    def update_dish(self, _dish: Dish, percent: float, image_path: str | None):
         with SessionLocal() as db:
             dish = db.query(Dish).filter(Dish.id == _dish.id).first()
             if percent > 0:
@@ -221,7 +225,10 @@ class MealDayRepository(IMealDayRepository, ABC):
                 mealday.nowcalorie -= (-_dish.calorie + dish.calorie)
                 mealday.update_datetime = datetime.utcnow()
             dish.heart = _dish.heart
+            dish.image_url = image_path
             dish.track_goal = _dish.track_goal
+            dish.label = _dish.label
+            dish.quantity =  _dish.quantity
             dish.update_dateime = datetime.utcnow()
             dish.size = _dish.size
             dish.carb = _dish.carb
@@ -229,84 +236,92 @@ class MealDayRepository(IMealDayRepository, ABC):
             dish.fat = _dish.fat
             dish.calorie = _dish.calorie
             db.commit()
-            return dish
+            return DishVO(**row_to_dict(dish))
 
+    def update_dish_quantity(self, dish_id: str, quantity: int, food: Food | None, name: str | None):
+        with SessionLocal() as db:
+            dish = db.query(Dish).filter(Dish.id == dish_id).first()
+            mealday = (
+                db.query(MealDay)
+                .join(Dish, Dish.mealday_id == MealDay.id)
+                .filter(Dish.id == dish.id)
+                .first()
+            )
+            if dish.label and name: # 라벨 -> 이름으로 변경시
+                mealday.carb += (-dish.carb + 0.0)
+                mealday.protein += (-dish.protein + 0.0)
+                mealday.fat += (-dish.fat + 0.0)
+                mealday.nowcalorie += (-dish.calorie + 700 * quantity)
+                mealday.update_datetime = datetime.utcnow()
+                dish.quantity = quantity
+                dish.update_dateime = datetime.utcnow()
+                dish.carb = 0
+                dish.protein = 0
+                dish.fat = 0
+                dish.calorie = 700 * quantity
+                db.commit()
+            elif dish.label is None and food: # 이름 -> 라벨로 변경시
+                mealday.carb += (-dish.carb + food.carb)
+                mealday.protein += (-dish.protein + food.protein)
+                mealday.fat += (-dish.fat + food.fat)
+                mealday.nowcalorie += (-dish.calorie + food.calorie * quantity)
+                mealday.update_datetime = datetime.utcnow()
+                dish.quantity = quantity
+                dish.update_dateime = datetime.utcnow()
+                dish.carb = 0
+                dish.protein = 0
+                dish.fat = 0
+                dish.calorie = 700 * quantity
+                db.commit()
+            else: # 이름->이름, 라벨->라벨
+                ratio = (float(quantity) / float(dish.quantity))
+                mealday.carb += dish.carb * ratio
+                mealday.protein += dish.protein * ratio
+                mealday.fat += dish.fat * ratio
+                mealday.nowcalorie += dish.calorie * ratio
+                mealday.update_datetime = datetime.utcnow()
+                dish.quantity += quantity
+                dish.update_dateime = datetime.utcnow()
+                dish.carb = dish.carb + dish.carb * ratio
+                dish.protein = dish.protein + dish.protein * ratio
+                dish.fat = dish.fat + dish.fat * ratio
+                dish.calorie = dish.calorie + dish.calorie * ratio
+                db.commit()
+            return DishVO(**row_to_dict(dish))
 
-    # def get_all_dishes_by_track_id(self, user_id: str, track_id: str):
-    #     with SessionLocal() as db:
-    #         track = db.query(Track).filter(Track.id == track_id).first()
-    #         date_iter = track.start_date
-    #         last_day =track.finish_date
-    #         dishes=[]
-    #         while date_iter <= last_day:
-    #             mealday = (
-    #                 db.query(MealDay)
-    #                 .options(
-    #                     joinedload(MealDay.meals).joinedload(Meal.dishes)
-    #                 )
-    #                 .filter(
-    #                     MealDay.user_id == user_id,
-    #                     MealDay.record_date == date_iter,
-    #                     MealDay.track_id == track_id
-    #                 )
-    #                 .first()
-    #             )
-    #             if mealday:
-    #                 for meal in mealday.meals:
-    #                     if meal and meal.dishes:
-    #                         dishes_full = []
-    #                         for dish in meal.dishes:
-    #                             picture_url = None
-    #                             if dish.picture and dish.picture != "default":
-    #                                 try:
-    #                                     # 서명된 URL 생성 (URL은 1시간 동안 유효)
-    #                                     blob = bucket.blob(dish.picture)
-    #                                     picture_url = blob.generate_signed_url(expiration=timedelta(hours=1))
-    #                                 except Exception:
-    #                                     raise raise_error(ErrorCode.DISH_NOT_FOUND)
-    #                             dish_data = Dish_Full.from_orm(dish)
-    #                             dish_data.picture = picture_url
-    #                             dishes_full.append(dish_data)
-    #
-    #                         dishes.append(Dish_with_datetime(
-    #                             record_date=mealday.record_date,
-    #                             mealtime=meal.mealtime,
-    #                             dish_list=dishes_full
-    #                         ))
-    #             date_iter += timedelta(days=1)
-    #
-    #         return dishes
+    def update_dish_label_or_name(self, dish_id: str, name: str | None, quantity: int, food: Food | None):
+        with SessionLocal() as db:
+            dish = db.query(Dish).filter(Dish.id == dish_id).first()
+            if dish is None:
+                raise raise_error(ErrorCode.DISH_NOT_FOUND)
+            mealday = (
+                db.query(MealDay)
+                .join(Dish, Dish.mealday_id == MealDay.id)
+                .filter(Dish.id == dish.id)
+                .first()
+            )
+            mealday.carb -= (-food.carb * quantity + dish.carb) if food else mealday.carb
+            mealday.protein -= (-food.protein * quantity + dish.protein) if food else mealday.protein
+            mealday.fat -= (-food.fat * quantity + dish.fat) if food else mealday.fat
+            mealday.nowcalorie -= (-food.calorie * quantity + dish.calorie) if food else (-700 * quantity + dish.calorie)
+            mealday.update_datetime = datetime.utcnow()
+            dish.quantity = quantity
+            dish.update_dateime = datetime.utcnow()
+            dish.carb = food.carb if food else 0.0
+            dish.protein = food.protein if food else 0.0
+            dish.fat = food.fat if food else 0.0
+            dish.size = food.size if food else 100.0
+            dish.label = food.label if food else None,
+            dish.calorie = food.calorie if food else 700 * quantity
+            dish.name = food.name if food else name
+            dish.update_datetime = datetime.utcnow()
+            db.commit()
+            return DishVO(**row_to_dict(dish))
 
-    # def create_dishes(self, user_id: str, meal_id: str,name: List[str], calorie: List[str], picture_path: List[str], mealday_id: str):
-    #     with SessionLocal() as db:
-    #         mealday = db.query(MealDay).filter(MealDay.id ==mealday_id).first()
-    #         trackparticipant = db.query(TrackParticipant).filter(TrackParticipant.user_id==user_id,TrackParticipant.track_id==mealday.track_id).first()
-    #         for i in range(len(name)):
-    #             food = db.query(Food).filter(Food.name == name[i]).first()
-    #             dish_label = food.label if food and food.label is not None else None
-    #             new_dish = Dish(
-    #                 id=str(ULID()),
-    #                 user_id=user_id,
-    #                 meal_id=meal_id,
-    #                 name=name[i],
-    #                 picture=picture_path[i],
-    #                 text=None,
-    #                 record_datetime=datetime.utcnow(),
-    #                 update_datetime=datetime.utcnow(),
-    #                 heart = False,
-    #                 carb = 0.0,
-    #                 protein =0.0,
-    #                 fat = 0.0,
-    #                 calorie = calorie[i],
-    #                 unit = "gram",
-    #                 size = 100.0,
-    #                 track_goal = False,
-    #                 label = dish_label,
-    #                 trackpart_id = trackparticipant.id,
-    #             )
-    #             db.add(new_dish)
-    #             mealday.nowcalorie += calorie[i]
-    #         db.add(mealday)
-    #         db.commit()
-
-
+    def update_dish_image(self, dish_id: str, image_path: str):
+        with SessionLocal() as db:
+            dish = db.query(Dish).filter(Dish.id == dish_id).first()
+            if dish is None:
+                return None
+            dish.image_url = image_path
+            db.commit()

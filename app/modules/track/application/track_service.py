@@ -14,7 +14,7 @@ from modules.track.domain.track import Track, TrackRoutine, RoutineCheck
 from modules.track.domain.track_routine_food import RoutineFood
 from modules.track.interface.schema.track_schema import CreateTrackRoutineBody, UpdateRoutineBody, \
     TrackResponse, UpdateTrackBody, TrackUpdateResponse, TrackStartBody, CreateTrackBody, RoutineFoodRequest, \
-    RoutineGroupResponse, RoutineFoodResponse, TrackRoutineResponse, RoutineFoodGroupResponse
+    RoutineGroupResponse, RoutineFoodResponse, TrackRoutineResponse, RoutineFoodGroupResponse, MealTime
 from modules.user.application.user_service import UserService
 from modules.user.domain.user import User
 from utils.db_utils import orm_to_pydantic_dataclass, orm_to_pydantic
@@ -314,8 +314,14 @@ class TrackService:
             raise raise_error(ErrorCode.ROUTINE_FOOD_CHECK_ALREADY_EXIST)
         self.track_repo.create_routine_food_check(routine_food_id=routine_food_id, dish_id=dish_id, user_id=user_id)
 
-    def update_routine_check(self, user_id: str, routine_id: str):
-        routine_check = self.track_repo.update_routine_check(user_id=user_id,routine_id=routine_id)
+    def delete_routine_food_check_by_dish_id(self, dish_id: str, user_id: str):
+        routine_food_check = self.track_repo.find_routine_food_check_by_dish_id(dish_id=dish_id,user_id=user_id)
+        if routine_food_check is None:
+            raise raise_error(ErrorCode.ROUTINE_FOOD_CHECK_NOT_FOUND)
+        self.track_repo.delete_routine_food_check(routine_food_check=routine_food_check)
+
+    def update_routine_check(self, user_id: str, routine_id: str, status: bool):
+        routine_check = self.track_repo.update_routine_check(user_id=user_id,routine_id=routine_id, status=status)
         if routine_check is None:
             raise raise_error(ErrorCode.ROUTINECHECK_NOT_FOUND)
 
@@ -337,3 +343,33 @@ class TrackService:
             d += 1
 
         return days
+
+    def get_routine_food_check_by_dish_id(self, dish_id: str, user_id: str):
+        routine_food_check = self.track_repo.find_routine_food_check_by_dish_id(dish_id=dish_id,user_id=user_id)
+        if routine_food_check is None:
+            return None
+        return routine_food_check
+
+    def get_routine_food_check_by_routine_food_id(self, routine_food_id: str, user_id: str):
+        routine_food_check = self.track_repo.find_routine_food_check_by_routine_food_id(routine_food_id=routine_food_id,user_id=user_id)
+        return routine_food_check
+
+    def get_routine_by_days_mealtime(self, track_id: str, days: int, mealtime: MealTime):
+        routine = self.track_repo.find_routine_by_days_mealtime(track_id, days,mealtime)
+        if routine is None:
+            raise raise_error(ErrorCode.TRACK_ROUTINE_NOT_FOUND)
+        return routine
+
+    def find_routine_food_by_label_or_name_with_routine_id(self, routine_id: str, label: int | None, name: str | None):
+        routine_food = self.track_repo.find_routine_food_by_routine_id_label_name(routine_id,label,name)
+        return routine_food
+
+    def count_routine_food_checks_by_routine_food_id(self, routine_id: str, user_id: str):
+        remain = 0
+        trackroutines = self.track_repo.find_routine_food_all_by_routine_id(routine_id=routine_id)
+        for trackroutine in trackroutines:
+            for routine_food in trackroutine.routine_foods:
+                current_rf_check = self.track_repo.find_routine_food_check_by_routine_food_id(routine_food_id=routine_food.id, user_id=user_id)
+                if current_rf_check:
+                    remain +=1
+        return remain

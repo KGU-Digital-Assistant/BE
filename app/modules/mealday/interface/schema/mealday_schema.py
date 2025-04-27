@@ -68,8 +68,9 @@ class UpdateMealDayBody(BaseModel):
 class UpdateDishBody(BaseModel):
     heart: Optional[bool] = None
     track_goal: Optional[bool] = None
-    size: Optional[float] = None
-
+    label: Optional[int] = None
+    name: Optional[str] = None
+    quantity: Optional[int] = None
 
 class Dish_Full(BaseModel):
     id: str
@@ -108,3 +109,6 @@ class CreateDishBody(BaseModel):
     quantity: Optional[int] = None
     image_url: Optional[str] = None
     label: Optional[int] = None
+
+class DishImageUrl(BaseModel):
+    image_url: str

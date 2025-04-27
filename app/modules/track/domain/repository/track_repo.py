@@ -6,7 +6,7 @@ from modules.track.domain.track_participant import TrackParticipant as TrackPart
 from modules.track.domain.track import Track, TrackRoutine, RoutineCheck
 from modules.track.domain.track_routine_food import RoutineFood, RoutineFoodCheck
 from modules.track.interface.schema.track_schema import UpdateTrackBody
-
+from modules.track.interface.schema.track_schema import MealTime
 
 class ITrackRepository(metaclass=ABCMeta):
     @abstractmethod
@@ -86,7 +86,11 @@ class ITrackRepository(metaclass=ABCMeta):
         raise NotImplementedError
 
     @abstractmethod
-    def update_routine_check(self, user_id: str, routine_id: str):
+    def delete_routine_food_check(self, routine_food_check: RoutineFoodCheck):
+        raise NotImplementedError
+
+    @abstractmethod
+    def update_routine_check(self, user_id: str, routine_id: str, status: bool):
         raise NotImplementedError
 
     @abstractmethod
@@ -111,4 +115,16 @@ class ITrackRepository(metaclass=ABCMeta):
 
     @abstractmethod
     def find_routine_food_check_by_else(self, routine_food_id: str, dish_id: str,user_id: str):
+        raise NotImplementedError
+
+    @abstractmethod
+    def find_routine_food_check_by_dish_id(self, dish_id: str, user_id: str):
+        raise NotImplementedError
+
+    @abstractmethod
+    def find_routine_by_days_mealtime(self, track_id: str, days: int, mealtime: MealTime):
+        raise NotImplementedError
+
+    @abstractmethod
+    def find_routine_food_by_routine_id_label_name(self, routine_id: str, label: int | None, name: str | None):
         raise NotImplementedError
