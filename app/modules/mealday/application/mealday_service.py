@@ -6,25 +6,25 @@ from urllib.parse import quote
 from dependency_injector.wiring import inject
 from calendar import monthrange
 from datetime import date, datetime, timedelta, time
-from core.fcm import bucket
+from app.core.fcm import bucket
 
-import modules.user.application.user_service
+import app.modules.user.application.user_service
 import requests
-from utils.parser import weekday_parse, time_parse, mealtime_parse
+from app.utils.parser import weekday_parse, time_parse, mealtime_parse
 
-from core.fcm import send_fcm_data_noti
-from modules.user.application.user_service import UserService
-from modules.mealday.domain.repository.mealday_repo import IMealDayRepository
-from modules.track.application.track_service import TrackService
-from modules.food.application.food_service import FoodService
-from modules.mealday.domain.mealday import MealDay as MealDayV0
-from modules.track.interface.schema.track_schema import MealTime
-from modules.mealday.interface.schema.mealday_schema import CreateDishBody, MealDayResponse_Full, \
+from app.core.fcm import send_fcm_data_noti
+from app.modules.user.application.user_service import UserService
+from app.modules.mealday.domain.repository.mealday_repo import IMealDayRepository
+from app.modules.track.application.track_service import TrackService
+from app.modules.food.application.food_service import FoodService
+from app.modules.mealday.domain.mealday import MealDay as MealDayV0
+from app.modules.track.interface.schema.track_schema import MealTime
+from app.modules.mealday.interface.schema.mealday_schema import CreateDishBody, MealdayResponseFull, \
     UpdateMealDayBody, UpdateDishBody
-from utils.crypto import Crypto
-from utils.db_utils import orm_to_pydantic, dataclass_to_pydantic
-from utils.exceptions.error_code import ErrorCode
-from utils.exceptions.handlers import raise_error
+from app.utils.crypto import Crypto
+from app.utils.db_utils import orm_to_pydantic, dataclass_to_pydantic
+from app.utils.exceptions.error_code import ErrorCode
+from app.utils.exceptions.handlers import raise_error
 
 class MealDayService:
     @inject
@@ -90,7 +90,7 @@ class MealDayService:
 
         new_mealday = self.create_mealday(user_id, record_date)
 
-        return dataclass_to_pydantic(self.mealday_repo.save_mealday(new_mealday), MealDayResponse_Full)
+        return dataclass_to_pydantic(self.mealday_repo.save_mealday(new_mealday), MealdayResponseFull)
 
     def create_mealday_by_track_id(self, user_id: str, track_id: str):
         track = self.track_service.validate_track(track_id=track_id, user_id=user_id)

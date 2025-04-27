@@ -6,15 +6,15 @@ from fastapi import APIRouter, Depends
 from sqlalchemy import Integer
 from starlette import status
 
-from containers import Container
-from core.auth import CurrentUser, get_current_user
-from modules.track.application import track_service
-from modules.track.application.track_service import TrackService
-from modules.track.interface.schema.track_schema import CreateTrackBody, TrackResponse, CreateTrackRoutineBody, \
+from app.containers import Container
+from app.core.auth import CurrentUser, get_current_user
+from app.modules.track.application import track_service
+from app.modules.track.application.track_service import TrackService
+from app.modules.track.interface.schema.track_schema import CreateTrackBody, TrackResponse, CreateTrackRoutineBody, \
     TrackRoutineResponse, UpdateTrackBody, UpdateRoutineBody, \
     TrackUpdateResponse, TrackParticipantResponse, TrackStartBody, RoutineFoodResponse, RoutineFoodRequest, \
     RoutineGroupResponse, RoutineCheckResponse
-from utils.responses.response import APIResponse
+from app.utils.responses.response import APIResponse
 
 track_router = APIRouter(prefix="/api/v1/track", tags=["track"])
 routine_router = APIRouter(prefix="/api/v1/routine", tags=["track routine"])

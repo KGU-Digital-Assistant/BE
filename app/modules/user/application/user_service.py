@@ -1,15 +1,15 @@
 from datetime import datetime
 from dependency_injector.wiring import inject
-from core.auth import create_access_token, Role
-from core.fcm import encrypt_token
-from modules.user.domain.repository.user_repo import IUserRepository
-from modules.user.domain.user import User
-from modules.user.interface.schema.user_schema import CreateUserBody, Rank, UpdateUserBody, UserResponse, \
+from app.core.auth import create_access_token, Role
+from app.core.fcm import encrypt_token
+from app.modules.user.domain.repository.user_repo import IUserRepository
+from app.modules.user.domain.user import User
+from app.modules.user.interface.schema.user_schema import CreateUserBody, Rank, UpdateUserBody, UserResponse, \
     UserInfoResponse
-from utils.crypto import Crypto
-from utils.db_utils import orm_to_pydantic, dataclass_to_pydantic
-from utils.exceptions.error_code import ErrorCode
-from utils.exceptions.handlers import raise_error
+from app.utils.crypto import Crypto
+from app.utils.db_utils import orm_to_pydantic, dataclass_to_pydantic
+from app.utils.exceptions.error_code import ErrorCode
+from app.utils.exceptions.handlers import raise_error
 
 
 class UserService:

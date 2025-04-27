@@ -1,9 +1,9 @@
 from abc import ABC
-from database import SessionLocal
-from modules.food.domain.repository.food_repo import IFoodRepository
-from modules.food.domain.food import Food as FoodVO
-from modules.food.infra.db_models.food import Food
-from utils.db_utils import row_to_dict
+from app.database import SessionLocal
+from app.modules.food.domain.repository.food_repo import IFoodRepository
+from app.modules.food.domain.food import Food as FoodVO
+from app.modules.food.infra.db_models.food import Food
+from app.utils.db_utils import row_to_dict
 
 
 class FoodRepository(IFoodRepository, ABC):

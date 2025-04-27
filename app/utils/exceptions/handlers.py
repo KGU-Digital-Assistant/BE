@@ -1,7 +1,7 @@
 from fastapi import HTTPException
 
-from utils.exceptions.error_code import ErrorCode
-from utils.responses.response import APIResponse
+from app.utils.exceptions.error_code import ErrorCode
+from app.utils.responses.response import APIResponse
 
 
 def raise_error(error_code: ErrorCode):

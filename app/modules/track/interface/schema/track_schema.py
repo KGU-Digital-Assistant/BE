@@ -4,7 +4,7 @@ from typing import Optional, ClassVar, List
 from pydantic import BaseModel, field_validator
 from enum import Enum
 
-from modules.user.interface.schema.user_schema import UserResponse
+from app.modules.user.interface.schema.user_schema import UserResponse
 
 
 class MealTime(Enum):

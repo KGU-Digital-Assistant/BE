@@ -3,24 +3,24 @@ from typing import List
 
 from dependency_injector.wiring import inject
 
-from modules.food.application.food_service import FoodService
-from modules.food.domain.food import Food
-from modules.track.domain.track_participant import TrackParticipant as TrackParticipantVO
-from modules.track.domain.repository.track_repo import ITrackRepository
+from app.modules.food.application.food_service import FoodService
+from app.modules.food.domain.food import Food
+from app.modules.track.domain.track_participant import TrackParticipant as TrackParticipantVO
+from app.modules.track.domain.repository.track_repo import ITrackRepository
 
 from ulid import ULID
 
-from modules.track.domain.track import Track, TrackRoutine, RoutineCheck
-from modules.track.domain.track_routine_food import RoutineFood
-from modules.track.interface.schema.track_schema import CreateTrackRoutineBody, UpdateRoutineBody, \
+from app.modules.track.domain.track import Track, TrackRoutine, RoutineCheck
+from app.modules.track.domain.track_routine_food import RoutineFood
+from app.modules.track.interface.schema.track_schema import CreateTrackRoutineBody, UpdateRoutineBody, \
     TrackResponse, UpdateTrackBody, TrackUpdateResponse, TrackStartBody, CreateTrackBody, RoutineFoodRequest, \
     RoutineGroupResponse, RoutineFoodResponse, TrackRoutineResponse, RoutineFoodGroupResponse
-from modules.user.application.user_service import UserService
-from modules.user.domain.user import User
-from utils.db_utils import orm_to_pydantic_dataclass, orm_to_pydantic
-from utils.exceptions.error_code import ErrorCode
-from utils.exceptions.handlers import raise_error
-from utils.parser import weekday_parse, time_parse, mealtime_parse
+from app.modules.user.application.user_service import UserService
+from app.modules.user.domain.user import User
+from app.utils.db_utils import orm_to_pydantic_dataclass, orm_to_pydantic
+from app.utils.exceptions.error_code import ErrorCode
+from app.utils.exceptions.handlers import raise_error
+from app.utils.parser import weekday_parse, time_parse, mealtime_parse
 
 
 class TrackService:

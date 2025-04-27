@@ -5,10 +5,10 @@ from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 from sqlalchemy import Integer, String, Float, Boolean, DateTime, Date, ForeignKey, Enum, Time, Table, Column, \
     UniqueConstraint
 
-from database import Base
+from app.database import Base
 import ulid
 
-from modules.track.interface.schema.track_schema import MealTime
+from app.modules.track.interface.schema.track_schema import MealTime
 
 
 class Track(Base):  # 식단트랙

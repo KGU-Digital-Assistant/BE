@@ -3,7 +3,7 @@ from typing import List, Optional
 import datetime
 from dataclasses import dataclass
 
-from modules.track.interface.schema.track_schema import MealTime
+from app.modules.track.interface.schema.track_schema import MealTime
 
 
 @dataclass

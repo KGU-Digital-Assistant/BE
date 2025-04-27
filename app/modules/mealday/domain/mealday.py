@@ -1,7 +1,8 @@
 from dataclasses import dataclass, field
 from datetime import date, datetime
 from typing import List, Optional
-from modules.track.interface.schema.track_schema import MealTime
+from app.modules.track.interface.schema.track_schema import MealTime
+
 
 @dataclass
 class Dish:  # 식단등록
@@ -27,6 +28,7 @@ class Dish:  # 식단등록
     label: Optional[int] = None
     trackpart_id: Optional[str] = None # 트랙참여 id
     mealday: Optional["MealDay"] = field(default=None)
+
 
 @dataclass
 class MealDay:

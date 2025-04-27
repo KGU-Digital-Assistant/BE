@@ -1,9 +1,9 @@
 from dependency_injector.wiring import inject
-from modules.user.domain.repository.user_repo import IUserRepository
-from modules.food.domain.repository.food_repo import IFoodRepository
-from utils.crypto import Crypto
-from utils.exceptions.error_code import ErrorCode
-from utils.exceptions.handlers import raise_error
+from app.modules.user.domain.repository.user_repo import IUserRepository
+from app.modules.food.domain.repository.food_repo import IFoodRepository
+from app.utils.crypto import Crypto
+from app.utils.exceptions.error_code import ErrorCode
+from app.utils.exceptions.handlers import raise_error
 
 
 class FoodService:

@@ -2,7 +2,8 @@ from datetime import datetime, date
 from typing import Optional, List
 
 from pydantic import BaseModel, Field
-from modules.track.interface.schema.track_schema import MealTime
+from app.modules.track.interface.schema.track_schema import MealTime
+
 
 class CreateMealDayBody(BaseModel):
     id: Optional[str] = Field(default=None, description="ID, 입력 불필요")  #자동 증가용
@@ -26,11 +27,13 @@ class CreateMealDayBody(BaseModel):
     routine_success_rate: Optional[float] = Field(default=None, ge=0, le=100, description="루틴 성공률(%)")
     track_id: Optional[str] = Field(default=None, description="Track ID, 해당일 Track 여부")
 
-class MealDayResponse_Date(BaseModel):
+
+class MealdayResponseDate(BaseModel):
     user_id: str
     record_date: date
 
-class MealDayResponse_Full(BaseModel):
+
+class MealdayResponseFull(BaseModel):
     id: str
     user_id: str
     record_date: date
@@ -71,7 +74,7 @@ class UpdateDishBody(BaseModel):
     size: Optional[float] = None
 
 
-class Dish_Full(BaseModel):
+class DishFull(BaseModel):
     id: str
     user_id: str
     mealday_id: str
@@ -96,10 +99,12 @@ class Dish_Full(BaseModel):
     class Config:
         from_attributes = True
 
-class Dish_with_datetime(BaseModel):
+
+class DishWithDatetime(BaseModel):
     record_date: date
     mealtime: MealTime
-    dish_list: List[Dish_Full]
+    dish_list: List[DishFull]
+
 
 class CreateDishBody(BaseModel):
     mealtime: str
