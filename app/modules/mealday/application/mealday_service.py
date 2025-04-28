@@ -20,7 +20,7 @@ from modules.food.application.food_service import FoodService
 from modules.mealday.domain.mealday import MealDay as MealDayV0
 from modules.track.interface.schema.track_schema import MealTime
 from modules.mealday.interface.schema.mealday_schema import CreateDishBody, MealDayResponse_Full, \
-    UpdateMealDayBody, UpdateDishBody, DishImageUrl
+    UpdateMealDayBody, UpdateDishBody, DishImageUrl, DishResponse, DishGroupResponse
 from utils.crypto import Crypto
 from utils.db_utils import orm_to_pydantic, dataclass_to_pydantic
 from utils.exceptions.error_code import ErrorCode
@@ -257,13 +257,20 @@ class MealDayService:
             raise raise_error(ErrorCode.MEALDAY_NOT_FOUND)
         trackpart = self.track_service.get_track_part_by_user_track_id(user_id=user_id, track_id=mealday.track_id)
         food = None
+        image_path = None
         if body.label is not None:
             food = self.food_service.get_food_data(food_label=body.label)
             if food is None:
                 raise raise_error(ErrorCode.NO_FOOD)
-        mealtime = time_parse(body.mealtime)
+            mealtime = time_parse(body.mealtime)
+            file_id = self.create_file_name(user_id=user_id)
+            dish_path = f"meal/{file_id}"
+            food_blob = bucket.blob(food.image_url)
+            dish_blob = bucket.blob(dish_path)
+            bucket.copy_blob(food_blob, bucket, dish_blob.name)
+            image_path = dish_blob.name
         self.mealday_repo.create_dish(user_id=user_id, mealday_id=mealday.id, body=body,
-            trackpart_id=trackpart.id, mealtime = mealtime,food = food)
+            trackpart_id=trackpart.id, mealtime = mealtime,food = food, image_path=image_path)
 
 
     def find_dish(self, user_id: str, dish_id: str):
@@ -279,6 +286,48 @@ class MealDayService:
                 raise raise_error(ErrorCode.DISH_NOT_FOUND)
             dish.image_url = signed_url
         return dish
+
+    def get_dish_not_routine(self, user_id: str, track_id: str):
+        track = self.track_service.validate_track(track_id=track_id, user_id=user_id)
+        start_date = track.start_date
+        finish_date = track.finish_date
+        group_list = []
+        num = 1
+        while finish_date >= start_date:
+            mealday = self.mealday_repo.find_by_date(user_id=user_id, record_date=start_date)
+            if mealday is None:
+                raise raise_error(ErrorCode.MEALDAY_NOT_FOUND)
+            all_dishes = self.mealday_repo.find_dish_all(mealday_id=mealday.id,user_id=user_id)
+            dishes_list=[]
+            for dish in all_dishes:
+                routine_food_check = self.track_service.get_routine_food_check_by_dish_id(dish_id=dish.id,user_id=user_id)
+                if routine_food_check:
+                    continue
+                else:
+                    image_url = None
+                    if dish.image_url:
+                        dish_blob = bucket.blob(dish.image_url)
+                        image_url = dish_blob.generate_signed_url(expiration=timedelta(hours=1))  # 60분 유효url
+                    dish_response = DishResponse(
+                        id = dish.id,
+                        mealtime = dish.mealtime,
+                        label = dish.label,
+                        name = dish.name,
+                        quantity = dish.quantity,
+                        calorie = dish.calorie,
+                        image_url = image_url
+                    )
+                    dishes_list.append(dish_response)
+                dishes_list = sorted(dishes_list, key=lambda dish: mealtime_parse(dish.mealtime))
+            dish_group_response = DishGroupResponse(
+                record_date = start_date,
+                days= num,
+                total_calorie = mealday.nowcalorie,
+                dishes = dishes_list
+            )
+            group_list.append(dish_group_response)
+            start_date += timedelta(days=1)
+        return group_list
 
     def remove_dish(self, user_id: str, dish_id: str):
         dish = self.mealday_repo.find_dish(user_id=user_id,dish_id=dish_id)
@@ -312,8 +361,6 @@ class MealDayService:
             blob = bucket.blob(image_url)
             if blob.exists():
                 blob.delete()
-
-
 
     def apply_update_dish(self, dish, body: UpdateDishBody, status: int):
         """사용자 정보 업데이트 적용"""

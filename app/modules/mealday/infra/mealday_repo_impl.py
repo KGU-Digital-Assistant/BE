@@ -147,7 +147,8 @@ class MealDayRepository(IMealDayRepository, ABC):
             db.commit()
             return DishVO(**row_to_dict(new_dish))
 
-    def create_dish(self, user_id: str, mealday_id: str, body: CreateDishBody, trackpart_id: str, mealtime: MealTime, food: Food):
+    def create_dish(self, user_id: str, mealday_id: str, body: CreateDishBody,
+                    trackpart_id: str, mealtime: MealTime, food: Food, image_path: str):
         with SessionLocal() as db:
             mealday = db.query(MealDay).filter(MealDay.id == mealday_id).first()
             new_dish = Dish(
@@ -156,9 +157,9 @@ class MealDayRepository(IMealDayRepository, ABC):
                 mealday_id=mealday.id,
                 mealtime=mealtime,
                 days=body.days,
-                name=body.name,
+                name=food.name if food else body.name,
                 quantity=body.quantity,
-                image_url=body.image_url,
+                image_url=image_path,
                 text=None,
                 record_datetime=datetime.utcnow(),
                 update_datetime=datetime.utcnow(),
@@ -185,6 +186,10 @@ class MealDayRepository(IMealDayRepository, ABC):
     def find_dish(self, user_id: str, dish_id: str):
         with SessionLocal() as db:
             return db.query(Dish).filter(Dish.user_id==user_id, Dish.id == dish_id).first()
+
+    def find_dish_all(self, user_id: str, mealday_id: str):
+        with SessionLocal() as db:
+            return db.query(Dish).filter(Dish.user_id==user_id,Dish.mealday_id==mealday_id).all()
 
     def delete_dish(self, user_id: str, dish_id: str):
         with SessionLocal() as db:

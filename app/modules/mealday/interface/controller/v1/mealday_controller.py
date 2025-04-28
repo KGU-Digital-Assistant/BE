@@ -8,7 +8,7 @@ from containers import Container
 from core.auth import CurrentUser, get_current_user
 from modules.mealday.application.mealday_service import MealDayService
 from modules.mealday.interface.schema.mealday_schema import MealDayResponse_Date, MealDayResponse_Full,\
-    Dish_Full,UpdateDishBody, UpdateMealDayBody, CreateDishBody, DishImageUrl
+    Dish_Full,UpdateDishBody, UpdateMealDayBody, CreateDishBody, DishImageUrl, DishGroupResponse
 from utils.responses.response import APIResponse
 
 
@@ -183,6 +183,20 @@ async def get_dish(
     """
     return mealday_service.find_dish(current_user.id, dish_id)
 
+@dish_router.get("/group/{track_id}", response_model=List[DishGroupResponse])
+@inject
+async def get_dish_not_routine(
+    current_user: Annotated[CurrentUser, Depends(get_current_user)],
+    track_id: Annotated[str, Path(description=" (형식: dasfsdrewarq)")],
+    mealday_service: MealDayService = Depends(Provide[Container.mealday_service])
+):
+    """
+    Dish 조회
+     - 입력예시 : track_id = dasfawerwreqw
+
+    """
+    return mealday_service.get_dish_not_routine(current_user.id, track_id)
+
 @dish_router.delete("/{dish_id}", response_model=APIResponse) ## 등록한 Dish 삭제
 @inject
 async def remove_dish(
@@ -216,7 +230,7 @@ def update_dish(
 
 @dish_router.patch("/image_url/{dish_id}", response_model=DishImageUrl)
 @inject
-def update_dish(
+def update_dish_image(
     current_user: Annotated[CurrentUser, Depends(get_current_user)],
     dish_id: Annotated[str, Path(description=" (형식: dasfsdrewarq)")],
     mealday_service: MealDayService = Depends(Provide[Container.mealday_service])
@@ -225,32 +239,3 @@ def update_dish(
     update dish 후 나온 dish_id를 활용하여 image_url을 변경한다
     """
     return mealday_service.update_dish_image(current_user.id, dish_id)
-
-
-# @dish_router.get("/get_all_dishes/{track_id}", response_model=List[Dish_with_datetime])
-# @inject
-# def get_all_dishes_by_track_id(
-#         track_id: Annotated[str, Path(description="트랙 id (형식: dasfdsafads)")],
-#         current_user: Annotated[CurrentUser, Depends(get_current_user)],
-#         mealday_service: MealDayService = Depends(Provide[Container.mealday_service])):
-#     return mealday_service.get_all_dishes_by_track_id(current_user.id, track_id)
-
-
-
-# @dish_router.post("/dish/register/{daytime}/{mealtime}", response_model=APIResponse)
-# @inject
-# async def register_dish(
-#     daytime: str = Path(..., description="형식: YYYY-MM-DD"),
-#     mealtime: str = Path(..., description="시간대 (형식: LUNCH)"),
-#     name: List[str] = Form(..., description="음식 이름 리스트"),
-#     calorie: List[float] = Form(..., description="칼로리 리스트"),
-#     picture: List[UploadFile] = File(default=[], description="0개 혹은 갯수맞춰서"),
-#     current_user: CurrentUser = Depends(get_current_user),
-#     mealday_service: MealDayService = Depends(Provide[Container.mealday_service])
-# ):
-#     """
-#     식단시간별(MealHour) 등록 (/dish/upload_temp api로 얻은 data 활용
-#      - 입력예시 : daytime = 2024-06-01, mealtime = LUNCH, name = ["치킨", "피자"], calorie =[100, 200], picture=[사진파일 2개]
-#     """
-#     mealday_service.register_dish(current_user.id, daytime, mealtime, name, calorie, picture)
-#     return APIResponse(status_code=status.HTTP_200_OK, message="Dish Post Success")

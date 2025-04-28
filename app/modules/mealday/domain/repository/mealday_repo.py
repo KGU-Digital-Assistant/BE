@@ -37,11 +37,16 @@ class IMealDayRepository(metaclass=ABCMeta):
         raise NotImplementedError
 
     @abstractmethod
-    def create_dish(self, user_id: str, mealday_id: str, body: CreateDishBody, trackpart_id: str, mealtime: MealTime, food: Food):
+    def create_dish(self, user_id: str, mealday_id: str, body: CreateDishBody,
+                    trackpart_id: str, mealtime: MealTime, food: Food, image_path: str):
         raise NotImplementedError
 
     @abstractmethod
     def find_dish(self, user_id: str, dish_id: str):
+        raise NotImplementedError
+
+    @abstractmethod
+    def find_dish_all(self, user_id: str, mealday_id: str):
         raise NotImplementedError
 
     @abstractmethod
