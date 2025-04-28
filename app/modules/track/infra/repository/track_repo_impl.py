@@ -6,8 +6,10 @@ from typing import List
 import ulid
 from fastapi import HTTPException
 from sqlalchemy.orm import Session, joinedload
+from sqlalchemy import or_, and_
 
 from app.database import SessionLocal
+from app.modules.track.interface.schema.track_schema import MealTime
 from app.modules.track.domain.repository.track_repo import ITrackRepository
 from app.modules.track.domain.track import Track as TrackVO
 from app.modules.track.domain.track import TrackRoutine as TrackRoutineVO, RoutineCheck as RoutineCheckVO
@@ -17,7 +19,8 @@ from app.modules.track.domain.track_participant import TrackParticipant as Track
 from app.modules.track.infra.db_models.track import Track, TrackRoutine, RoutineCheck
 from app.modules.track.infra.db_models.track_participant import TrackParticipant
 from app.modules.track.infra.db_models.track_routine_food import RoutineFood, RoutineFoodCheck
-from app.modules.track.interface.schema.track_schema import UpdateTrackBody, FlagStatus
+from app.modules.track.interface.schema.track_schema import UpdateTrackBody, TrackRoutineList, FlagStatus
+from app.modules.user.infra.db_models.user import User
 from app.utils.db_utils import row_to_dict
 from app.utils.exceptions.error_code import ErrorCode
 from app.utils.exceptions.handlers import raise_error
@@ -315,12 +318,17 @@ class TrackRepository(ITrackRepository, ABC):
             db.add(new_routin_food_check)
             db.commit()
 
-    def update_routine_check(self, user_id: str, routine_id: str):
+    def delete_routine_food_check(self, routine_food_check: RoutineFoodCheck):
+        with SessionLocal() as db:
+            db.delete(routine_food_check)
+            db.commit()
+
+    def update_routine_check(self, user_id: str, routine_id: str, status: bool):
         with SessionLocal() as db:
             routine_check=db.query(RoutineCheck).filter(RoutineCheck.user_id==user_id,RoutineCheck.routine_id==routine_id).first()
             if routine_check is None:
                 return None
-            routine_check.is_complete = True
+            routine_check.is_complete = status
             routine_check.check_time = datetime.utcnow()
             db.add(routine_check)
             db.commit()
@@ -343,3 +351,32 @@ class TrackRepository(ITrackRepository, ABC):
             if routine_food_check is None:
                 return None
             return RoutineFoodCheckVO(**row_to_dict(routine_food_check))
+
+    def find_routine_food_check_by_dish_id(self, dish_id: str, user_id: str):
+        with SessionLocal() as db:
+            return db.query(RoutineFoodCheck).filter(
+                    RoutineFoodCheck.dish_id == dish_id,
+                    RoutineFoodCheck.user_id == user_id
+                ).first()
+
+    def find_routine_by_days_mealtime(self, track_id: str, days: int, mealtime: MealTime):
+        with SessionLocal() as db:
+            return db.query(TrackRoutine).filter(
+                TrackRoutine.track_id==track_id,
+                TrackRoutine.days==days,
+                TrackRoutine.mealtime==mealtime
+            ).first()
+
+    def find_routine_food_by_routine_id_label_name(self, routine_id: str, label: int | None, name: str | None):
+        with SessionLocal() as db:
+            query = db.query(RoutineFood).filter(RoutineFood.routine_id == routine_id)
+            if label is not None:
+                query = query.filter(RoutineFood.food_label == label)
+            elif name is not None:
+                query = query.filter(
+                    RoutineFood.food_label.is_(None),
+                    RoutineFood.food_name == name
+                )
+            else:
+                return None  # label과 name 둘 다 없으면 None
+            return query.first()

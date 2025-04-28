@@ -37,7 +37,8 @@ class IMealDayRepository(metaclass=ABCMeta):
         raise NotImplementedError
 
     @abstractmethod
-    def create_dish(self, user_id: str, mealday_id: str, body: CreateDishBody, trackpart_id: str, mealtime: MealTime, food: Food):
+    def create_dish(self, user_id: str, mealday_id: str, body: CreateDishBody,
+                    trackpart_id: str, mealtime: MealTime, food: Food, image_path: str):
         raise NotImplementedError
 
     @abstractmethod
@@ -45,17 +46,29 @@ class IMealDayRepository(metaclass=ABCMeta):
         raise NotImplementedError
 
     @abstractmethod
+    def find_dish_all(self, user_id: str, mealday_id: str):
+        raise NotImplementedError
+
+    @abstractmethod
+    def find_by_id(self, mealday_id: str) -> MealDay:
+        raise NotImplementedError
+
+    @abstractmethod
     def delete_dish(self, user_id: str, dish_id: str):
         raise NotImplementedError
 
     @abstractmethod
-    def update_dish(self, _dish: Dish, percent: float):
+    def update_dish(self, _dish: Dish, percent: float, image_path: str):
         raise NotImplementedError
 
-    # @abstractmethod
-    # def get_all_dishes_by_track_id(self, user_id: str, track_id: str):
-    #     raise NotImplementedError
+    @abstractmethod
+    def update_dish_quantity(self, dish_id: str, quantity: int, food: Food | None, name: str | None):
+        raise NotImplementedError
 
-    # @abstractmethod
-    # def create_dishes(self, user_id: str, meal_id: str,name: List[str], calorie: List[str], picture_path: List[str], mealday_id: str):
-    #     raise NotImplementedError
+    @abstractmethod
+    def update_dish_label_or_name(self, dish_id: str, name: str | None, quantity: int, food: Food | None):
+        raise NotImplementedError
+
+    @abstractmethod
+    def update_dish_image(self, dish_id: str, image_path: str):
+        raise NotImplementedError

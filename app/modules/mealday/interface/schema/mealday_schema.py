@@ -1,4 +1,4 @@
-from datetime import datetime, date
+from datetime import datetime, date, time
 from typing import Optional, List
 
 from pydantic import BaseModel, Field
@@ -71,8 +71,9 @@ class UpdateMealDayBody(BaseModel):
 class UpdateDishBody(BaseModel):
     heart: Optional[bool] = None
     track_goal: Optional[bool] = None
-    size: Optional[float] = None
-
+    label: Optional[int] = None
+    name: Optional[str] = None
+    quantity: Optional[int] = None
 
 class DishFull(BaseModel):
     id: str
@@ -113,3 +114,20 @@ class CreateDishBody(BaseModel):
     quantity: Optional[int] = None
     image_url: Optional[str] = None
     label: Optional[int] = None
+
+class DishImageUrl(BaseModel):
+    image_url: str
+
+class DishResponse(BaseModel):
+    id: str
+    mealtime: MealTime
+    label: int | None = None
+    name: str
+    quantity: int
+    calorie: float
+    image_url: str | None = None
+class DishGroupResponse(BaseModel):
+    record_date: date
+    days: int
+    total_calorie: float
+    dishes: Optional[List[DishResponse]]

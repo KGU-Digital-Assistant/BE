@@ -6,6 +6,7 @@ class ErrorCode(Enum):
     # Track 관련 에러 코드
     ROUTINE_CHECK_ALREADY_EXIST = (status.HTTP_409_CONFLICT, "이미 루틴 트랙이 존재합니다.")
     ROUTINE_FOOD_CHECK_ALREADY_EXIST = (status.HTTP_409_CONFLICT, "이미 루틴 푸드 트랙이 존재합니다.")
+    ROUTINE_FOOD_CHECK_NOT_FOUND = (status.HTTP_404_NOT_FOUND, "루틴 FOOD-CHECK가 존재하지 않습니다.")
     ROUTINE_DAYS_SO_OVER = (status.HTTP_400_BAD_REQUEST, "루틴 days가 트랙 duration보다 큽니다.")
     TRACK_ROUTINE_FOOD_NOT_FOUND = (status.HTTP_404_NOT_FOUND, "ROUTINE FOOD가 존재하지 않습니다.")
     TRACK_ROUTINE_NOT_FOUND = (status.HTTP_404_NOT_FOUND, "루틴이 존재하지 않습니다.")
@@ -42,6 +43,7 @@ class ErrorCode(Enum):
     DISH_NOT_FOUND = (status.HTTP_404_NOT_FOUND, "DISH가 존재하지 않습니다.")
     NO_PICTURE = (status.HTTP_404_NOT_FOUND, "DISH의 사진이 존재하지 않습니다.")
     YOLO_FAILED = (status.HTTP_502_BAD_GATEWAY, "YOLO_SERVER연결에 실패했습니다.")
+    DISH_ALREADY_EXIST = (status.HTTP_409_CONFLICT, "DISH가 이미 존재합니다.")
 
     ## FOOD 관련 에러코드
     NO_FOOD = (status.HTTP_404_NOT_FOUND, "음식데이터가 존재하지 않습니다.")
