@@ -4,9 +4,9 @@ import ulid
 
 from sqlalchemy import String, Boolean, DateTime, Enum, Date, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from database import Base
-from core.auth import Role
-from modules.user.interface.schema.user_schema import Rank, Gender
+from app.database import Base
+from app.core.auth import Role
+from app.modules.user.interface.schema.user_schema import Rank, Gender
 
 
 class User(Base):  # 회원

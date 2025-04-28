@@ -3,7 +3,7 @@ from datetime import datetime
 from sqlalchemy import ForeignKey, Integer, String, UniqueConstraint, Boolean, DateTime
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from database import Base
+from app.database import Base
 
 
 # Routine - Food 중간 테이블

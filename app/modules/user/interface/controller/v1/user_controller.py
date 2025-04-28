@@ -6,13 +6,13 @@ from dependency_injector.wiring import inject, Provide
 from fastapi.security import OAuth2PasswordRequestForm
 from starlette import status
 
-from containers import Container
-from core.auth import CurrentUser, get_current_user
-from modules.user.application.user_service import UserService
-from modules.user.interface.schema.user_schema import CreateUserBody, UserResponse, UpdateUserBody, UserInfoResponse, \
+from app.containers import Container
+from app.core.auth import CurrentUser, get_current_user
+from app.modules.user.application.user_service import UserService
+from app.modules.user.interface.schema.user_schema import CreateUserBody, UserResponse, UpdateUserBody, UserInfoResponse, \
     UserFcmToken
-from utils.phone_verify import PhoneNumberRequest, VerificationRequest, send_code, verify_code
-from utils.responses.response import APIResponse
+from app.utils.phone_verify import PhoneNumberRequest, VerificationRequest, send_code, verify_code
+from app.utils.responses.response import APIResponse
 
 
 router = APIRouter(prefix="/api/v1/user", tags=["user"])

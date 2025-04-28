@@ -3,6 +3,7 @@ from typing import Optional, List
 
 from pydantic import BaseModel, Field
 
+
 class Food_Data(BaseModel):
     label: Optional[int] = 0
     name: Optional[str] = "음식명"

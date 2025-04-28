@@ -4,18 +4,18 @@ from fastapi import APIRouter, Depends, Query, Path, UploadFile, File, Form
 from typing import List, Optional
 from dependency_injector.wiring import inject, Provide
 from starlette import status
-from containers import Container
-from core.auth import CurrentUser, get_current_user
-from modules.mealday.application.mealday_service import MealDayService
-from modules.mealday.interface.schema.mealday_schema import MealDayResponse_Date, MealDayResponse_Full,\
+from app.containers import Container
+from app.core.auth import CurrentUser, get_current_user
+from app.modules.mealday.application.mealday_service import MealDayService
+from app.modules.mealday.interface.schema.mealday_schema import MealDayResponse_Date, MealDayResponse_Full,\
     Dish_Full,UpdateDishBody, UpdateMealDayBody, CreateDishBody, DishImageUrl, DishGroupResponse
-from utils.responses.response import APIResponse
+from app.utils.responses.response import APIResponse
 
 
 mealday_router = APIRouter(prefix="/api/v1/meal_day", tags=["mealday"])
 
 
-@mealday_router.post("/date/{daytime}", response_model=MealDayResponse_Date)
+@mealday_router.post("/date/{daytime}", response_model=MealdayResponseDate)
 @inject
 def create_mealday_by_date(
         daytime: Annotated[str, Path(description="생성날짜 (형식: YYYY-MM-DD)")],
@@ -42,7 +42,7 @@ def create_mealday_by_track_id(
     created_count = mealday_service.create_mealday_by_track_id(current_user.id, track_id)
     return APIResponse(status_code=status.HTTP_200_OK, message=f"{created_count} mealday created")
 
-@mealday_router.get("/{daytime}", response_model=MealDayResponse_Full)
+@mealday_router.get("/{daytime}", response_model=MealdayResponseFull)
 @inject
 def get_mealday_by_date(
     current_user: Annotated[CurrentUser, Depends(get_current_user)],
@@ -169,7 +169,7 @@ async def register_v4(
     mealday_service.register_dish_v4(current_user.id, daytime, body)
     return APIResponse(status_code=status.HTTP_200_OK, message="Dish Post Success")
 
-@dish_router.get("/{dish_id}", response_model=Dish_Full)
+@dish_router.get("/{dish_id}", response_model=DishFull)
 @inject
 async def get_dish(
     current_user: Annotated[CurrentUser, Depends(get_current_user)],

@@ -2,8 +2,8 @@ from abc import ABCMeta, abstractmethod
 
 from sqlalchemy.orm import Session
 
-from modules.user.domain.user import User
-from modules.user.interface.schema.user_schema import CreateUserBody
+from app.modules.user.domain.user import User
+from app.modules.user.interface.schema.user_schema import CreateUserBody
 
 
 class IUserRepository(metaclass=ABCMeta):
