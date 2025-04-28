@@ -69,7 +69,7 @@ def upgrade() -> None:
     sa.PrimaryKeyConstraint('id', name=op.f('pk_RoutineFoodCheck')),
     sa.UniqueConstraint('routine_food_id', 'dish_id', name='uq_routine_dish_pair')
     )
-    op.add_column('TrackRoutine', sa.Column('mealtime', sa.Enum('BREAKFAST', 'BRUNCH', 'LUNCH', 'LINNER', 'DINNER', 'SNACK', name='mealtime'), nullable=False))
+    # op.add_column('TrackRoutine', sa.Column('mealtime', sa.Enum('BREAKFAST', 'BRUNCH', 'LUNCH', 'LINNER', 'DINNER', 'SNACK', name='mealtime'), nullable=False))
     # ### end Alembic commands ###
 
 

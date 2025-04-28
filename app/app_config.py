@@ -37,6 +37,8 @@ class Settings(BaseSettings):
     MY_PHONE_NUMBER: str
     FERNET_KEY: str
 
+    TEST_SQLALCHEMY_DATABASE_URL: str
+
 
 @lru_cache
 def get_settings():

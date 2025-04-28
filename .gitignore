@@ -27,6 +27,7 @@ Thumbs.db
 # Docker
 *.env
 docker-compose.override.yml
+alembic.ini
 
 # Test and build
 .cache/

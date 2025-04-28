@@ -11,6 +11,7 @@ from app.core.auth import CurrentUser, get_current_user
 from app.modules.user.application.user_service import UserService
 from app.modules.user.interface.schema.user_schema import CreateUserBody, UserResponse, UpdateUserBody, UserInfoResponse, \
     UserFcmToken
+from app.utils.db_utils import dataclass_to_pydantic
 from app.utils.phone_verify import PhoneNumberRequest, VerificationRequest, send_code, verify_code
 from app.utils.responses.response import APIResponse
 
