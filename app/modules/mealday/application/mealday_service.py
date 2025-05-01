@@ -20,7 +20,7 @@ from app.modules.track.application.track_service import TrackService
 from app.modules.food.application.food_service import FoodService
 from app.modules.mealday.domain.mealday import MealDay as MealDayV0
 from app.modules.track.interface.schema.track_schema import MealTime
-from app.modules.mealday.interface.schema.mealday_schema import CreateDishBody, MealDayResponse_Full, \
+from app.modules.mealday.interface.schema.mealday_schema import CreateDishBody, \
     UpdateMealDayBody, UpdateDishBody, DishImageUrl, DishResponse, DishGroupResponse
 from app.utils.crypto import Crypto
 from app.utils.db_utils import orm_to_pydantic, dataclass_to_pydantic
