@@ -7,8 +7,8 @@ from starlette import status
 from app.containers import Container
 from app.core.auth import CurrentUser, get_current_user
 from app.modules.mealday.application.mealday_service import MealDayService
-from app.modules.mealday.interface.schema.mealday_schema import MealDayResponse_Date, MealDayResponse_Full,\
-    Dish_Full,UpdateDishBody, UpdateMealDayBody, CreateDishBody, DishImageUrl, DishGroupResponse
+from app.modules.mealday.interface.schema.mealday_schema import MealdayResponseDate, MealdayResponseFull,\
+    DishFull,UpdateDishBody, UpdateMealDayBody, CreateDishBody, DishImageUrl, DishGroupResponse
 from app.utils.responses.response import APIResponse
 
 
@@ -211,7 +211,7 @@ async def remove_dish(
     return APIResponse(status_code=status.HTTP_200_OK, message="Dish Delete Success")
 
 
-@dish_router.patch("/{dish_id}", response_model=Dish_Full)
+@dish_router.patch("/{dish_id}", response_model=DishFull)
 @inject
 def update_dish(
     current_user: Annotated[CurrentUser, Depends(get_current_user)],
