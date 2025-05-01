@@ -1,18 +1,29 @@
-# Base image
 FROM python:3.10-slim
 
-# Set the working directory
+# 시스템 패키지 설치
+RUN apt update && apt install -y \
+    build-essential \
+    gcc \
+    libpq-dev \
+    libffi-dev \
+    libssl-dev \
+    rustc \
+    curl \
+    && apt clean
+
 WORKDIR /app
 
-# Install dependencies
 COPY requirements.txt .
+COPY ${FIREBASE_PATH} /app
+COPY entrypoint.sh .
+COPY .env .
+
+RUN chmod +x entrypoint.sh
+RUN pip install --upgrade pip
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy project files
-COPY . .
+COPY app .
 
-# Expose port
 EXPOSE 8000
 
-# Run FastAPI application
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["./entrypoint.sh"]

@@ -27,6 +27,7 @@ Thumbs.db
 # Docker
 *.env
 docker-compose.override.yml
+alembic.ini
 
 # Test and build
 .cache/
@@ -36,3 +37,4 @@ htmlcov/
 build/
 dist/
 *.egg-info/
+app/*.json
