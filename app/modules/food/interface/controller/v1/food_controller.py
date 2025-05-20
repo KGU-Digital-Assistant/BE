@@ -3,13 +3,13 @@ from dependency_injector.wiring import inject, Provide
 from app.containers import Container
 from typing import List
 from app.modules.food.application.food_service import FoodService
-from app.modules.food.interface.schema.food_schema import Food_Data
+from app.modules.food.interface.schema.food_schema import FoodData
 
 
-router = APIRouter(prefix="/api/v1/food", tags=["food"])
+router = APIRouter(prefix="/api/v1/foods", tags=["Food"])
 
 
-@router.get("/search", response_model=List[Food_Data])
+@router.get("/search", response_model=List[FoodData])
 @inject
 def search_food_data(
     name: str = Query(..., description="조회할 음식명"),
@@ -21,7 +21,7 @@ def search_food_data(
     return food_service.search_food_data(name)
 
 
-@router.get("/{food_label}", response_model=Food_Data)
+@router.get("/{food_label}", response_model=FoodData)
 @inject
 def get_food_data(
     food_label: int,

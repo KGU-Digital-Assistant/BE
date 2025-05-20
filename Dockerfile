@@ -14,9 +14,9 @@ RUN apt update && apt install -y \
 WORKDIR /app
 
 COPY requirements.txt .
-COPY ${FIREBASE_PATH} /app
 COPY entrypoint.sh .
 COPY .env .
+COPY ${FIREBASE_PATH} /app
 
 RUN chmod +x entrypoint.sh
 RUN pip install --upgrade pip
