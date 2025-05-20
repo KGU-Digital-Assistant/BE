@@ -16,9 +16,9 @@ from app.modules.track.interface.schema.track_schema import CreateTrackBody, Tra
     RoutineGroupResponse, RoutineCheckResponse
 from app.utils.responses.response import APIResponse
 
-track_router = APIRouter(prefix="/api/v1/track", tags=["track"])
-routine_router = APIRouter(prefix="/api/v1/routine", tags=["track routine"])
-routine_food_router = APIRouter(prefix="/api/v1/routine/food", tags=["routine food"])
+track_router = APIRouter(prefix="/api/v1/tracks", tags=["Track"])
+routine_router = APIRouter(prefix="/api/v1/routines", tags=["Track-Routine"])
+routine_food_router = APIRouter(prefix="/api/v1/routine-foods", tags=["Routine-Food"])
 
 
 @track_router.post("/", response_model=TrackResponse)
@@ -48,7 +48,7 @@ def create_routine(
     return routine
 
 
-@track_router.post("/copy/{track_id}", response_model=TrackResponse)
+@track_router.post("/{track_id}/copy", response_model=TrackResponse)
 @inject
 def copy_track(
         track_id: str,
@@ -76,7 +76,7 @@ def create_routine_food(
     return track_service.create_routine_food(routine_id, body, current_user.id)
 
 
-@routine_router.post("/check_table/{routine_id}", response_model=RoutineCheckResponse)
+@routine_router.post("/{routine_id}/check-table", response_model=RoutineCheckResponse)
 @inject
 def create_routine_check(
         routine_id: str,
@@ -89,7 +89,7 @@ def create_routine_check(
     return track_service.create_routine_check(routine_id, current_user.id)
 
 
-@track_router.get("/days/{track_id}", response_model=Dict[str, datetime.date])
+@track_router.get("/{track_id}/days", response_model=Dict[str, datetime.date])
 @inject
 def get_track_days(
         track_id: str,
@@ -130,7 +130,7 @@ def get_track(
     return track_service.get_track_by_id(track_id=track_id, user_id=current_user.id)
 
 
-@routine_router.get("/day/group/{track_id}", response_model=List[List[RoutineGroupResponse]])
+@routine_router.get("/{track_id}/days", response_model=List[List[RoutineGroupResponse]])
 @inject
 def get_routine_list(
         current_user: Annotated[CurrentUser, Depends(get_current_user)],
@@ -146,7 +146,7 @@ def get_routine_list(
     return track_service.get_routine_list(track_id=track_id, user_id=current_user.id)
 
 
-@track_router.get("/track/list", response_model=List[TrackUpdateResponse])
+@track_router.get("/", response_model=List[TrackUpdateResponse])
 @inject
 def get_tracks(
         current_user: Annotated[CurrentUser, Depends(get_current_user)],
@@ -239,10 +239,7 @@ def delete_routine_food(
     return track_service.delete_routine_food(user_id=current_user.id, routine_food_id=routine_food_id)
 
 
-# @routine_food_router.
-
-
-@track_router.post("/start/{track_id}", response_model=TrackParticipantResponse)
+@track_router.post("/{track_id}/start", response_model=TrackParticipantResponse)
 @inject
 def start_track(
         current_user: Annotated[CurrentUser, Depends(get_current_user)],
@@ -256,7 +253,7 @@ def start_track(
     return track_service.track_start(user_id=current_user.id, track_id=track_id, body=body)
 
 
-@track_router.put("/termination/{track_id}", response_model=TrackParticipantResponse)
+@track_router.put("/{track_id}/terminate", response_model=TrackParticipantResponse)
 @inject
 def terminate_track(
         current_user: Annotated[CurrentUser, Depends(get_current_user)],

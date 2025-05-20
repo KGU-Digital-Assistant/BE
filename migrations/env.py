@@ -16,6 +16,7 @@ fileConfig(config.config_file_name)
 # 대상 메타데이터
 target_metadata = app.database.Base.metadata
 
+
 def run_migrations_offline():
     """Run migrations in 'offline' mode."""
     context.configure(
@@ -25,6 +26,7 @@ def run_migrations_offline():
     )
     with context.begin_transaction():
         context.run_migrations()
+
 
 def run_migrations_online():
     """Run migrations in 'online' mode."""
@@ -37,6 +39,7 @@ def run_migrations_online():
         context.configure(connection=connection, target_metadata=target_metadata)
         with context.begin_transaction():
             context.run_migrations()
+
 
 if context.is_offline_mode():
     run_migrations_offline()

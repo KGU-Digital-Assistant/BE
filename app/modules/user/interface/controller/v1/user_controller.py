@@ -16,10 +16,10 @@ from app.utils.phone_verify import PhoneNumberRequest, VerificationRequest, send
 from app.utils.responses.response import APIResponse
 
 
-router = APIRouter(prefix="/api/v1/user", tags=["user"])
+router = APIRouter(prefix="/api/v1/users", tags=["User"])
 
 
-@router.post("/create", response_model=UserResponse)
+@router.post("/", response_model=UserResponse)
 @inject
 def create_user(
         user: CreateUserBody,
@@ -28,7 +28,7 @@ def create_user(
     return user_service.create_user(user)
 
 
-@router.delete("/delete", response_model=APIResponse)
+@router.delete("/", response_model=APIResponse)
 @inject
 def delete_user(
         current_user: Annotated[CurrentUser, Depends(get_current_user)],
@@ -38,7 +38,7 @@ def delete_user(
     return APIResponse(status_code=status.HTTP_200_OK, message="User deleted")
 
 
-@router.put("/update", response_model=UserInfoResponse)
+@router.put("/", response_model=UserInfoResponse)
 @inject
 def update_user(
         body: UpdateUserBody,
@@ -65,7 +65,7 @@ def login(
     return {"access_token": access_token, "token_type": "bearer"}
 
 
-@router.get("/info", response_model=UserInfoResponse)
+@router.get("/", response_model=UserInfoResponse)
 @inject
 def get_user_info(
         current_user: Annotated[CurrentUser, Depends(get_current_user)],
@@ -91,7 +91,7 @@ def save_fcm_token(
     return user_service.save_fcm_token(current_user.id, token)
 
 
-@router.get("/username", response_model=List[UserInfoResponse])
+@router.get("/{username}", response_model=List[UserInfoResponse])
 @inject
 def get_users_by_username(
         current_user: Annotated[CurrentUser, Depends(get_current_user)],
@@ -104,7 +104,7 @@ def get_users_by_username(
     return user_service.get_users_by_username(username)
 
 
-@router.post("/send-code/", response_model=APIResponse)
+@router.post("/phone/send-code", response_model=APIResponse)
 def phone_send_code(
         request: PhoneNumberRequest,
 ):
@@ -115,7 +115,7 @@ def phone_send_code(
     return APIResponse(status_code=status.HTTP_200_OK)
 
 
-@router.post("/verify-code/", response_model=APIResponse)
+@router.post("/phone/verify-code", response_model=APIResponse)
 def phone_verify_code(
         request: VerificationRequest,
 ):
