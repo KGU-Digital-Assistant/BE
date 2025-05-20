@@ -4,7 +4,7 @@ from typing import Optional, List
 from pydantic import BaseModel, Field
 
 
-class Food_Data(BaseModel):
+class FoodData(BaseModel):
     label: Optional[int] = 0
     name: Optional[str] = "음식명"
     size: Optional[float] = 0.0
