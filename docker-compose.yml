@@ -7,6 +7,8 @@ services:
       dockerfile: Dockerfile
     ports:
       - "8000:8000"
+    networks:
+      - fastapi-network
     volumes:
       - .:/app
     env_file:
@@ -20,6 +22,8 @@ services:
     container_name: postgres
     ports:
       - "5432:5432"
+    networks:
+      - fastapi-network
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
@@ -32,11 +36,18 @@ services:
     container_name: redis
     ports:
       - "6379:6379"
+    networks:
+      - fastapi-network
     volumes:
       - redis_data:/data
     command: redis-server --appendonly yes
     restart: unless-stopped
 
+networks:
+  fastapi-network:
+    external: true
+
 volumes:
   db_data:
   redis_data:
+
