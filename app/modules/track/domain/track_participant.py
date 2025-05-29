@@ -8,5 +8,4 @@ class TrackParticipant:
     user_id: str
     track_id: str
     joined_at: datetime = field(default_factory=datetime.utcnow)
-    status: FlagStatus = False
-
+    status: FlagStatus = FlagStatus.READY

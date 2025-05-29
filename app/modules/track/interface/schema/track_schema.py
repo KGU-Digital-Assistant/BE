@@ -83,6 +83,13 @@ class RoutineFoodRequest(BaseModel):
     quantity: int
     food_name: Optional[str] = None
 
+    @field_validator("quantity")
+    def validate_quantity(cls, value):
+        if value < 1:
+            raise ValueError("'quantity' must be greater than 0.")
+        return value
+
+
 
 class TrackResponse(BaseModel):
     id: str
@@ -149,6 +156,7 @@ class TrackParticipantResponse(BaseModel):
     id: str
     user_id: str
     track_id: str
+    status: FlagStatus
     joined_at: datetime
 
 
