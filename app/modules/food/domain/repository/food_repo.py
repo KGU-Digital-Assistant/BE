@@ -11,3 +11,7 @@ class IFoodRepository(metaclass=ABCMeta):
     def find_food_by_label(self, label: int):
         raise NotImplementedError
 
+    @abstractmethod
+    def insert_food_data(self, food_vo_list):
+        raise NotImplementedError
+

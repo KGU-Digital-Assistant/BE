@@ -47,7 +47,7 @@ def decode_access_token(token: str):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
 
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/user/login")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/users/login")
 
 
 @dataclass
@@ -64,7 +64,7 @@ def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]):
 
     user_id = payload.get("user_id")
     role = payload.get("role")
-    if not user_id or not role or role != Role.USER.value:
+    if not user_id or role not in [Role.USER.value, Role.ADMIN.value]:
         raise raise_error(ErrorCode.USER_NOT_AUTHENTICATED)
 
     return CurrentUser(user_id, Role(role))
@@ -72,9 +72,9 @@ def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]):
 
 def get_admin_user(token: Annotated[str, Depends(oauth2_scheme)]):
     payload = decode_access_token(token)
-
     role = payload.get("role")
-    if not role or role != Role.ADMIN:
+    print(role)
+    if not role or role != Role.ADMIN.value:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN)
 
-    return CurrentUser("ADMIN_USER_ID", role)
+    return CurrentUser(payload.get("user_id"), role)

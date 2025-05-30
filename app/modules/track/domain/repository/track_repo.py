@@ -130,3 +130,15 @@ class ITrackRepository(metaclass=ABCMeta):
     @abstractmethod
     def find_routine_food_by_routine_id_label_name(self, routine_id: str, label: int | None, name: str | None):
         raise NotImplementedError
+
+    @abstractmethod
+    def find_participate_track(self, user_id: str):
+        raise NotImplementedError
+
+    @abstractmethod
+    def update_participant(self, track_part_vo: TrackParticipantVO):
+        raise NotImplementedError
+
+    @abstractmethod
+    def find_all_participant(self, user_id: str):
+        raise NotImplementedError

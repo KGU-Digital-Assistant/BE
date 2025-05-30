@@ -86,6 +86,7 @@ class TrackRepository(ITrackRepository, ABC):
                 routine_id=routine_food_vo.routine_id,
                 food_label=routine_food_vo.food_label,
                 quantity=routine_food_vo.quantity,
+                food_name=routine_food_vo.food_name
             )
             db.add(routine_food)
 
@@ -106,13 +107,11 @@ class TrackRepository(ITrackRepository, ABC):
             db.commit()
             return RoutineCheckVO(**row_to_dict(routine_check))
 
-    def find_by_id(self, track_id: str) -> TrackVO | None:
+    def find_by_id(self, track_id: str):
         with (SessionLocal() as db):
-            track = db.query(Track
-                             ).options(
+            track = db.query(Track).options(
                 joinedload(Track.routines).joinedload(TrackRoutine.routine_foods)
-            ).filter(Track.id == track_id
-                     ).first()
+            ).filter(Track.id == track_id).first()
 
             if track is None:
                 return None
@@ -146,7 +145,7 @@ class TrackRepository(ITrackRepository, ABC):
     def find_routine_food_check_by_routine_food_id(self, routine_food_id: str, user_id: str):
         with SessionLocal() as db:
             routine_food_check = db.query(RoutineFoodCheck).filter(
-                RoutineFoodCheck.routine_food_id == routine_food_id and
+                RoutineFoodCheck.routine_food_id == routine_food_id,
                 RoutineFoodCheck.user_id == user_id).first()
             if routine_food_check is None:
                 return None
@@ -243,15 +242,12 @@ class TrackRepository(ITrackRepository, ABC):
 
     def start_track(self, track_participant_vo: TrackParticipantVO):
         with SessionLocal() as db:
-            if db.query(TrackParticipant).filter(TrackParticipant.track_id == track_participant_vo.track_id
-                                                 and TrackParticipant.user_id == track_participant_vo.user_id).first():
-                raise_error(ErrorCode.PARTICIPANT_ALREADY_EXIST)
-
             track_participant = TrackParticipant(
                 id=track_participant_vo.id,
                 track_id=track_participant_vo.track_id,
                 user_id=track_participant_vo.user_id,
                 joined_at=track_participant_vo.joined_at,
+                status=track_participant_vo.status
             )
             db.add(track_participant)
             db.commit()
@@ -259,8 +255,10 @@ class TrackRepository(ITrackRepository, ABC):
 
     def terminate_track(self, user_id: str, track_id: str):
         with SessionLocal() as db:
-            track_participant = db.query(TrackParticipant).filter(TrackParticipant.user_id == user_id and
+            track_participant = db.query(TrackParticipant).filter(TrackParticipant.user_id == user_id,
                                                                   TrackParticipant.track_id == track_id).first()
+            if track_participant is None:
+                return None
             track_participant.status = FlagStatus.TERMINATED
             db.commit()
             return TrackParticipantVO(**row_to_dict(track_participant))
@@ -289,11 +287,10 @@ class TrackRepository(ITrackRepository, ABC):
             if clear_routine is None:
                 return None
             return RoutineCheckVO(**row_to_dict(clear_routine))
-            
 
     def find_routine_food_all_by_routine_id(self, routine_id: str):
         with SessionLocal() as db:
-            trackroutin_foods = (
+            track_routine_foods = (
                 db.query(TrackRoutine)
                 .options(
                     joinedload(TrackRoutine.routine_foods).joinedload(RoutineFood.food)
@@ -301,13 +298,13 @@ class TrackRepository(ITrackRepository, ABC):
                 .filter(TrackRoutine.id == routine_id)
                 .all()
             )
-            if trackroutin_foods is None:
+            if track_routine_foods is None:
                 return None
-            return trackroutin_foods
+            return track_routine_foods
 
     def create_routine_food_check(self, routine_food_id: str, dish_id: str, user_id: str):
         with SessionLocal() as db:
-            new_routin_food_check = RoutineFoodCheck(
+            new_routine_food_check = RoutineFoodCheck(
                 id=str(ulid.ULID()),
                 routine_food_id=routine_food_id,
                 dish_id=dish_id,
@@ -315,7 +312,7 @@ class TrackRepository(ITrackRepository, ABC):
                 is_complete=True,  ## 추후 변경필요
                 check_time=datetime.utcnow()
             )
-            db.add(new_routin_food_check)
+            db.add(new_routine_food_check)
             db.commit()
 
     def delete_routine_food_check(self, routine_food_check: RoutineFoodCheck):
@@ -380,3 +377,30 @@ class TrackRepository(ITrackRepository, ABC):
             else:
                 return None  # label과 name 둘 다 없으면 None
             return query.first()
+
+    def find_participate_track(self, user_id: str):
+        with SessionLocal() as db:
+            track_part = db.query(TrackParticipant).filter(TrackParticipant.user_id == user_id,
+                                                           TrackParticipant.status != FlagStatus.TERMINATED.value).first()
+            if track_part is None:
+                return None
+            return TrackParticipantVO(**row_to_dict(track_part))
+
+    def update_participant(self, track_part_vo: TrackParticipantVO):
+        with SessionLocal() as db:
+            track_part = db.query(TrackParticipant).filter(TrackParticipant.id == track_part_vo.id).first()
+            if track_part is None:
+                return None
+
+            track_part.status = track_part_vo.status
+            db.commit()
+            return TrackParticipantVO(**row_to_dict(track_part))
+
+    def find_all_participant(self, user_id: str):
+        with SessionLocal() as db:
+            track_part_list = db.query(TrackParticipant).filter(TrackParticipant.user_id == user_id).all()
+            res = []
+            for track_part_vo in track_part_list:
+                res.append(TrackParticipantVO(**row_to_dict(track_part_vo)))
+
+            return res

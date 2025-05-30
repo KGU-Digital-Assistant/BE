@@ -1,5 +1,5 @@
 import datetime
-from typing import Annotated, List, Dict
+from typing import Annotated, List, Dict, Optional
 
 from dependency_injector.wiring import inject, Provide
 from fastapi import APIRouter, Depends
@@ -13,7 +13,7 @@ from app.modules.track.application.track_service import TrackService
 from app.modules.track.interface.schema.track_schema import CreateTrackBody, TrackResponse, CreateTrackRoutineBody, \
     TrackRoutineResponse, UpdateTrackBody, UpdateRoutineBody, \
     TrackUpdateResponse, TrackParticipantResponse, TrackStartBody, RoutineFoodResponse, RoutineFoodRequest, \
-    RoutineGroupResponse, RoutineCheckResponse
+    RoutineGroupResponse, RoutineCheckResponse, FlagStatus
 from app.utils.responses.response import APIResponse
 
 track_router = APIRouter(prefix="/api/v1/tracks", tags=["Track"])
@@ -87,6 +87,30 @@ def create_routine_check(
     ### RoutineCheck 테이블 생성 API
     """
     return track_service.create_routine_check(routine_id, current_user.id)
+
+
+@track_router.get("/participants", response_model=List[TrackParticipantResponse])
+@inject
+def get_participants(
+        current_user: Annotated[CurrentUser, Depends(get_current_user)],
+        track_service: TrackService = Depends(Provide[Container.track_service]),
+):
+    """
+    참여했던, 참여중인 트랙 참여 데이터 가져오기
+    """
+    return track_service.get_track_part_all(current_user.id)
+
+
+@track_router.get("/participants/current", response_model=Optional[TrackParticipantResponse])
+@inject
+def participating_tracks(
+        current_user: Annotated[CurrentUser, Depends(get_current_user)],
+        track_service: TrackService = Depends(Provide[Container.track_service]),
+):
+    """
+    현재 참여중인 트랙 보기
+    """
+    return track_service.get_track_current_part_by_user_id(current_user.id)
 
 
 @track_router.get("/{track_id}/days", response_model=Dict[str, datetime.date])
