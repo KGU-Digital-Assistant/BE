@@ -4,6 +4,7 @@ from fastapi import HTTPException, status
 
 class ErrorCode(Enum):
     # Track 관련 에러 코드
+    FOOD_EXISTS = (status.HTTP_409_CONFLICT, "이미 데이터가 존재합니다.")
     ROUTINE_CHECK_ALREADY_EXIST = (status.HTTP_409_CONFLICT, "이미 루틴 트랙이 존재합니다.")
     ROUTINE_FOOD_CHECK_ALREADY_EXIST = (status.HTTP_409_CONFLICT, "이미 루틴 푸드 트랙이 존재합니다.")
     ROUTINE_FOOD_CHECK_NOT_FOUND = (status.HTTP_404_NOT_FOUND, "루틴 FOOD-CHECK가 존재하지 않습니다.")
@@ -17,6 +18,8 @@ class ErrorCode(Enum):
 
     # Participant 관련 에러 코드
     PARTICIPANT_ALREADY_EXIST = (status.HTTP_409_CONFLICT, "이미 트랙에 참여중입니다.")
+    ALREADY_PARTICIPATED_ANOTHER_TRACK = (status.HTTP_409_CONFLICT, "이미 다른 트랙에 참여중입니다.")
+    PARTICIPANT_NOT_FOUND = (status.HTTP_404_NOT_FOUND, "해당 트랙 참여 데이터를 찾을 수 없습니다.")
 
     # 인증
     CODE_VERIFY_FAIL = (status.HTTP_400_BAD_REQUEST, "인증 코드가 올바르지 않습니다.")
@@ -26,6 +29,7 @@ class ErrorCode(Enum):
     # User 관련 에러 코드
     PASSWORD_INVALID = (status.HTTP_401_UNAUTHORIZED, "비밀번호가 틀립니다.")
     USER_NOT_AUTHENTICATED = (status.HTTP_401_UNAUTHORIZED, "로그인에 실패했습니다.")
+    USER_NOT_AUTHORIZED = (status.HTTP_401_UNAUTHORIZED, "권한이 없습니다.")
     USER_NOT_FOUND = (status.HTTP_404_NOT_FOUND, "사용자 정보가 존재하지 않습니다.")
     USER_ALREADY_EXIST = (status.HTTP_409_CONFLICT, "이미 존재하는 회원입니다.")
     USER_ALREADY_EXIST_CELLPHONE = (status.HTTP_409_CONFLICT, "중복된 휴대폰 번호입니다.")

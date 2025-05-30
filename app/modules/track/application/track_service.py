@@ -14,7 +14,7 @@ from app.modules.track.domain.track import Track, TrackRoutine, RoutineCheck
 from app.modules.track.domain.track_routine_food import RoutineFood
 from app.modules.track.interface.schema.track_schema import CreateTrackRoutineBody, UpdateRoutineBody, \
     TrackResponse, UpdateTrackBody, TrackUpdateResponse, TrackStartBody, CreateTrackBody, RoutineFoodRequest, \
-    RoutineGroupResponse, RoutineFoodResponse, TrackRoutineResponse, RoutineFoodGroupResponse, MealTime
+    RoutineGroupResponse, RoutineFoodResponse, TrackRoutineResponse, RoutineFoodGroupResponse, MealTime, FlagStatus
 from app.modules.user.application.user_service import UserService
 from app.modules.user.domain.user import User
 from app.utils.db_utils import orm_to_pydantic_dataclass, orm_to_pydantic
@@ -43,7 +43,7 @@ class TrackService:
         if not track.routines:
             track.routines = []
         if track.user_id != user_id:
-            raise raise_error(ErrorCode.USER_NOT_AUTHENTICATED)
+            raise raise_error(ErrorCode.USER_NOT_AUTHORIZED)
         return track
 
     def validate_routine(self, routine_id: str, user_id: str):
@@ -51,7 +51,7 @@ class TrackService:
         if routine is None:
             raise raise_error(ErrorCode.TRACK_ROUTINE_NOT_FOUND)
         if routine.track.user_id != user_id:
-            raise raise_error(ErrorCode.USER_NOT_AUTHENTICATED)
+            raise raise_error(ErrorCode.USER_NOT_AUTHORIZED)
         return routine
 
     def create_track(self, user_id: str, body: CreateTrackBody):
@@ -79,6 +79,7 @@ class TrackService:
             food = self.food_service.get_food_data(food_label=body_food.food_label)
             if food is None and body_food.food_name is None:
                 raise_error(ErrorCode.NO_FOOD_NO_NAME)
+
             routine_food = RoutineFood(
                 id="",
                 routine_id="",
@@ -87,7 +88,9 @@ class TrackService:
                 food_name=body_food.food_name or food.name
             )
             routine_food_body.append(routine_food)
-            calories += (food.calorie * routine_food.quantity)
+            food_calories = 750 if food is None else food.calorie
+            calories += (food_calories * routine_food.quantity)
+            # food_label 이 없으면 750칼로리 자동으로 계산하기 !!!!
 
         for day in body.days.split(","):
             _day = int(day)
@@ -122,14 +125,17 @@ class TrackService:
 
     def create_routine_food(self, routine_id: str, body: RoutineFoodRequest, user_id: str):
         routine = self.validate_routine(routine_id, user_id)
+        food_label = body.food_label if body.food_label is not None else None
         new_routine_food = RoutineFood(
             id=str(ULID()),
             routine_id=routine.id,
-            food_label=body.food_label,
+            food_label=food_label,
             quantity=body.quantity,
+            food_name=body.food_name,
         )
-        food = self.food_service.get_food_data(body.food_label)
-        routine.calorie += (food.calorie * body.quantity)
+        food = self.food_service.get_food_data(food_label)
+        food_calories = 750 if food is None else food.calorie
+        routine.calorie += (food_calories * body.quantity)
         return self.track_repo.routine_food_save(new_routine_food, routine)
 
     def get_routine_by_id(self, routine_id: str, user_id: str):
@@ -167,10 +173,13 @@ class TrackService:
         routine = self.validate_routine(routine_food.track_routine_id, user_id)
         old_food = self.food_service.get_food_data(routine_food.food_label)
 
-        new_food = self.food_service.get_food_data(body.food_label)
-        calories = (new_food.calorie * body.quantity) - (old_food.calorie * routine_food.quantity)
-
-        routine_food.food_label = body.food_label
+        calories = 750
+        if body.food_label:
+            new_food = self.food_service.get_food_data(body.food_label)
+            calories = (new_food.calorie * body.quantity) - (old_food.calorie * routine_food.quantity)
+        else:
+            routine_food.food_name = body.food_name
+        routine_food.food_label = body.food_label if body.food_label else None
         routine_food.quantity = body.quantity
 
         return self.track_repo.update_routine_food(routine.id, routine_food, calories)
@@ -250,15 +259,31 @@ class TrackService:
 
     def track_start(self, user_id: str, track_id: str, body: TrackStartBody):
         self.validate_track(track_id, user_id)
+        track_part = self.track_repo.find_participate_track(user_id)
+        if track_part:
+            raise raise_error(ErrorCode.ALREADY_PARTICIPATED_ANOTHER_TRACK)
+        track_part = self.track_repo.find_track_part_by_user_track_id(user_id, track_id)
+        if track_part and track_part.status.value == FlagStatus.TERMINATED.value:
+            track_part.status = FlagStatus.READY if body.start_date != datetime.today().date else FlagStatus.STARTED
+            self.track_repo.update_start_date(track_id, user_id, body.start_date)
+            return self.track_repo.update_participant(track_part)
+
+        if track_part:
+            raise raise_error(ErrorCode.PARTICIPANT_ALREADY_EXIST)
 
         track_participant = TrackParticipantVO(id=str(ULID()), track_id=track_id, user_id=user_id)
+        if body.start_date == datetime.today().date:
+            track_participant.status = FlagStatus.STARTED
         res = self.track_repo.start_track(track_participant)
         self.track_repo.update_start_date(track_id, user_id, body.start_date)
         return res
 
     def track_terminate(self, user_id: str, track_id: str):
-        track = self.validate_track(user_id, track_id)
-        return self.track_repo.terminate_track(user_id, track.id)
+        track = self.validate_track(track_id, user_id)
+        track_part = self.track_repo.terminate_track(user_id, track.id)
+        if track_part is None:
+            raise raise_error(ErrorCode.PARTICIPANT_NOT_FOUND)
+        return track_part
 
     def copy_track(self, track_id: str, user_id: str):
         track = self.validate_track(track_id, user_id)
@@ -366,10 +391,16 @@ class TrackService:
 
     def count_routine_food_checks_by_routine_food_id(self, routine_id: str, user_id: str):
         remain = 0
-        trackroutines = self.track_repo.find_routine_food_all_by_routine_id(routine_id=routine_id)
-        for trackroutine in trackroutines:
-            for routine_food in trackroutine.routine_foods:
+        track_routines = self.track_repo.find_routine_food_all_by_routine_id(routine_id=routine_id)
+        for track_routine in track_routines:
+            for routine_food in track_routine.routine_foods:
                 current_rf_check = self.track_repo.find_routine_food_check_by_routine_food_id(routine_food_id=routine_food.id, user_id=user_id)
                 if current_rf_check:
-                    remain +=1
+                    remain += 1
         return remain
+
+    def get_track_current_part_by_user_id(self, user_id: str):
+        return self.track_repo.find_participate_track(user_id=user_id)
+
+    def get_track_part_all(self, user_id: str):
+        return self.track_repo.find_all_participant(user_id=user_id)

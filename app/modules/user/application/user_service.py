@@ -43,7 +43,7 @@ class UserService:
 
         return create_access_token(
             payload={"user_id": user.id},
-            role=Role.USER,
+            role=user.role
         )
 
     def delete_user(self, id: str):
