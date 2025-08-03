@@ -1,5 +1,27 @@
 # BE
 ⚙️ BackEnd 코드 리펙토링을 위한 레포지토리
+> 기존 레포지토리 링크 -> https://github.com/iamjunhyeong/KGU-Digital-Assistant-BE
+
+## ⚒️ Refactoring
+<img width="410" height="470" alt="image" src="https://github.com/user-attachments/assets/8d9a36cc-de80-4f13-b126-b71cc92d8d97" />
+
+- 관심사 분리 (Separation of Concerns)
+
+- 의존성 역전 (Dependency Inversion)
+  → 예: application은 infra에 의존하지 않음.
+
+- 확장성과 테스트 용이성 증가
+
+- 도메인 중심 개발 + 계층 분리 (interface / application / domain / infra)
+
+
+
+
+## 🌊Flow
+![누메이트_시퀀스다이어그램rev0](https://github.com/user-attachments/assets/086a3718-eaeb-4635-a5bf-7d1fa15cee16)
+
+## Poster
+![image](https://github.com/user-attachments/assets/bf1ec2f0-556a-4207-badd-cfb43b277d1a)
 
 ## 🤝 Commit Convention
 
